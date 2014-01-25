@@ -5,7 +5,7 @@
 
 __license__ = 'BSD'
 __copyright__ = '2014, Chen Wei <weichen302@gmail.com>'
-__version__ = '0.0.1'
+__version__ = '0.0.2'
 
 
 from StringIO import StringIO
@@ -44,6 +44,21 @@ ICAL_SEC = ('BEGIN:VEVENT\n'
 
 ICAL_END = 'END:VCALENDAR'
 
+CN_DAY = {u'初二': 2, u'初三': 3, u'初四': 4, u'初五': 5, u'初六': 6,
+          u'初七': 7, u'初八': 8, u'初九': 9, u'初十': 10, u'十一': 11,
+          u'十二': 12, u'十三': 13, u'十四': 14, u'十五': 15, u'十六': 16,
+          u'十七': 17, u'十八': 18, u'十九': 19, u'二十': 20, u'廿一': 21,
+          u'廿二': 22, u'廿三': 23, u'廿四': 24, u'廿五': 25, u'廿六': 26,
+          u'廿七': 27, u'廿八': 28, u'廿九': 29, u'三十': 30}
+
+CN_MON = {u'正月': 1, u'二月': 2, u'三月': 3, u'四月': 4,
+          u'五月': 5, u'六月': 6, u'七月': 7, u'八月': 8,
+          u'九月': 9, u'十月': 10, u'十一月': 11, u'十二月': 12,
+
+          u'閏正月': 101, u'閏二月': 102, u'閏三月': 103, u'閏四月': 104,
+          u'閏五月': 105, u'閏六月': 106, u'閏七月': 107, u'閏八月': 108,
+          u'閏九月': 109, u'閏十月': 110, u'閏十一月': 111, u'閏十二月': 112}
+
 
 def initdb():
     try:
@@ -58,6 +73,7 @@ def initdb():
                     id INTEGER PRIMARY KEY,
                     date TEXT UNIQUE,
                     lunardate TEXT,
+                    holiday TEXT,
                     jieqi TEXT)''')
     conn.commit()
     db.close()
@@ -164,19 +180,21 @@ def gen_cal(start, end, fp):
         none
         '''
 
-    sql = ('select date, lunardate, jieqi from ical '
+    sql = ('select date, lunardate, holiday, jieqi from ical '
            'where date>=? and date<=? order by date')
     rows = query_db(sql, (start, end))
     lines = [ICAL_HEAD]
     oneday = timedelta(days=1)
     for r in rows:
         dt = datetime.strptime(r['date'], '%Y-%m-%d')
+
+        ld = [r['lunardate']]
+        if r['holiday']:
+            ld.append(r['holiday'])
         if r['jieqi']:
-            ld = '%s %s' % (r['lunardate'], r['jieqi'])
-        else:
-            ld = r['lunardate']
+            ld.append(r['jieqi'])
         line = ICAL_SEC % (dt.strftime('%Y%m%d'),
-                           (dt + oneday).strftime('%Y%m%d'), ld)
+                           (dt + oneday).strftime('%Y%m%d'), ' '.join(ld))
         lines.append(line.encode('utf8'))
     lines.append(ICAL_END)
     outputf = open(fp, 'w')
@@ -185,10 +203,89 @@ def gen_cal(start, end, fp):
     print 'iCal lunar calendar from %s to %s saved to %s' % (start, end, fp)
 
 
+def post_process():
+    ''' there are several mistakes in HK OBS data, the following date
+    do not have a valid lunar date, instead are the weekday names, they
+    are all 三十 '''
+    sql_update = 'update ical set lunardate=? where date=?'
+
+    HK_ERROR = ('2036-01-27', '2053-12-09', '2056-03-15',
+                '2063-07-25', '2063-10-21', '2063-12-19')
+    conn = sqlite3.connect(DB_FILE)
+    db = conn.cursor()
+    for d in HK_ERROR:
+        print 'fix lunar date for %s' % d
+        db.execute(sql_update, (u'三十', d))
+    conn.commit()
+
+
+def update_holiday():
+    ''' write chinese traditional holiday to db
+
+    腊八节(腊月初八)     除夕(腊月的最后一天)     春节(一月一日)
+    元宵节(一月十五日)   寒食节(清明的前一天)     端午节(五月初五)
+    七夕节(七月初七)     中元节(七月十五日)       中秋节(八月十五日)
+    重阳节(九月九日)     下元节(十月十五日)
+
+    '''
+    sql = 'select * from ical order by date'
+    rows = query_db(sql)
+    args = []
+    m = None
+    previd = None
+    for r in rows:
+        try:
+            d = CN_DAY[r['lunardate']]
+        except KeyError:
+            #print 'debug: %s %s' % (r['date'], r['lunardate'])
+            m = CN_MON[r['lunardate']]
+            d = 1
+
+        if not m:
+            continue
+
+        if m == 12 and d == 8:
+            args.append((r['id'], u'腊八'))
+        elif m == 1 and d == 1:
+            args.append((r['id'], u'春节'))
+            args.append((previd, u'除夕'))
+        elif m == 1 and d == 15:
+            args.append((r['id'], u'元宵'))
+        elif m == 5 and d == 5:
+            args.append((r['id'], u'端午'))
+        elif m == 7 and d == 7:
+            args.append((r['id'], u'七夕'))
+        elif m == 7 and d == 15:
+            args.append((r['id'], u'中元'))
+        elif m == 8 and d == 15:
+            args.append((r['id'], u'中秋'))
+        elif m == 9 and d == 9:
+            args.append((r['id'], u'重阳'))
+        elif m == 10 and d == 15:
+            args.append((r['id'], u'下元'))
+
+        if r['jieqi'] == u'清明':
+            args.append((previd, u'寒食'))
+        previd = r['id']
+
+    sql_update = 'update ical set holiday=? where id=?'
+    conn = sqlite3.connect(DB_FILE)
+    db = conn.cursor()
+    for arg in args:
+        db.execute(sql_update, (arg[1], arg[0]))
+        print 'update %s' % arg[1]
+    conn.commit()
+    print 'Chinese Traditional Holiday updated'
+
+
 def main():
+    #TODO holiday
     if not os.path.exists(DB_FILE):
         initdb()
         update_cal()
+        # fix error in HK data
+        post_process()
+        update_holiday()
     cy = datetime.today().year
     start = '%d-01-01' % (cy - 1)
     end = '%d-12-31' % (cy + 1)
