@@ -30,5 +30,5 @@ Try the Chinese Lunar Calendar by add this [link][iCal] to your favorite calenda
 
 [Contact me](mailto: weichen302@gmail.com)
 
-[iCal]: https://raw.github.com/infinet/chinese-lunar-calendar/gh-pages/chinese_lunar_prev_year_next_year.ics
+[iCal]: https://raw.github.com/infinet/lunar-calender/master/chinese_lunar_prev_year_next_year.ics
 [Hong Kong Observatory]: http://gb.weather.gov.hk/gts/time/conversionc.htm
