@@ -24,6 +24,7 @@ to a local sqlite database, then use that database to generate two ics files,
 one for all days from 1901 to 2100, **Warning**, this file is huge, over 6M;
 another is only cover 3 years, from the previous to the end of next year.
 
+Try the Chinese Lunar Calendar by add this [link][iCal] to your favorite calendar app.
 
 
 
