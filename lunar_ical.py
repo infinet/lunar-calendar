@@ -37,8 +37,11 @@ ICAL_HEAD = ('BEGIN:VCALENDAR\n'
              'X-WR-CALDESC:中国农历1901-2100, 包括节气. 数据来自香港天文台')
 
 ICAL_SEC = ('BEGIN:VEVENT\n'
+            'DTSTAMP:%s\n'
+            'UID:%s\n'
             'DTSTART;VALUE=DATE:%s\n'
             'DTEND;VALUE=DATE:%s\n'
+            'STATUS:CONFIRMED\n'
             'SUMMARY:%s\n'
             'END:VEVENT')
 
@@ -202,8 +205,11 @@ def gen_cal(start, end, fp):
             ld.append(r['holiday'])
         if r['jieqi']:
             ld.append(r['jieqi'])
-        line = ICAL_SEC % (dt.strftime('%Y%m%d'),
-                           (dt + oneday).strftime('%Y%m%d'), ' '.join(ld))
+        uid = '%s-lc@infinet.github.io' % r['date']
+        summary = ' '.join(ld)
+        utcstamp = datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')
+        line = ICAL_SEC % (utcstamp, uid, dt.strftime('%Y%m%d'),
+                       (dt + oneday).strftime('%Y%m%d'), summary)
         lines.append(line.encode('utf8'))
     lines.append(ICAL_END)
     outputf = open(fp, 'w')
