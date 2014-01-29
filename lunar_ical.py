@@ -7,18 +7,18 @@ __license__ = 'BSD'
 __copyright__ = '2014, Chen Wei <weichen302@gmail.com>'
 __version__ = '0.0.2'
 
-
 from StringIO import StringIO
 from datetime import datetime
 from datetime import timedelta
 import cookielib
+import getopt
 import gzip
 import os
 import re
 import sqlite3
+import sys
 import urllib2
 import zlib
-
 
 APPDIR = os.path.abspath(os.path.dirname(__file__))
 DB_FILE = os.path.join(APPDIR, 'db', 'lunarcal.sqlite')
@@ -279,24 +279,49 @@ def update_holiday():
 
 
 def main():
-    #TODO holiday
-    if not os.path.exists(DB_FILE):
-        initdb()
-        update_cal()
-        # fix error in HK data
-        post_process()
-        update_holiday()
     cy = datetime.today().year
     start = '%d-01-01' % (cy - 1)
     end = '%d-12-31' % (cy + 1)
-    fp = OUTPUT % ('prev_year', 'next_year')
-    gen_cal(start, end, fp)
 
-    # from 1901 to 2100
-    start2 = '1901-01-01'
-    end2 = '2100-12-31'
-    fp2 = OUTPUT % ('1901', '2100')
-    gen_cal(start2, end2, fp2)
+    helpmsg = ('Usage: lunar_ical.py --start=startdate --end=enddate\n'
+'Example: \n'
+'\tlunar_ical.py --start=2013-10-31 --end=2015-12-31\n'
+'Or,\n'
+'\tlunar_ical.py without option will generate the calendar from previous year '
+'to the end of the next year')
+
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], 'h',
+                                   ['start=', 'end=', 'help'])
+    except getopt.GetoptError as err:
+        print str(err)
+        print helpmsg
+        sys.exit(2)
+    hkstart = datetime.strptime('1901-01-01', '%Y-%m-%d')
+    hkend = datetime.strptime('2100-12-31', '%Y-%m-%d')
+    for o, v in opts:
+        if o == '--start':
+            start = v
+            if datetime.strptime(start, '%Y-%m-%d') < hkstart:
+                sys.exit('start date must newer than 1901-01-01')
+        elif o == '--end':
+            end = v
+            if datetime.strptime(end, '%Y-%m-%d') > hkend:
+                sys.exit('end date must before 2100-12-31')
+        elif 'h' in o:
+            sys.exit(helpmsg)
+
+    if not os.path.exists(DB_FILE):
+        initdb()
+        update_cal()
+        post_process()  # fix error in HK data
+        update_holiday()
+    if len(sys.argv) == 1:
+        fp = OUTPUT % ('prev_year', 'next_year')
+    else:
+        fp = OUTPUT % (start, end)
+
+    gen_cal(start, end, fp)
 
 
 if __name__ == "__main__":
