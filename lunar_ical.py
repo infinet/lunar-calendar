@@ -59,6 +59,12 @@ CN_MON = {u'正月': 1, u'二月': 2, u'三月': 3, u'四月': 4,
           u'閏五月': 105, u'閏六月': 106, u'閏七月': 107, u'閏八月': 108,
           u'閏九月': 109, u'閏十月': 110, u'閏十一月': 111, u'閏十二月': 112}
 
+GAN = (u'庚', u'辛', u'壬', u'癸', u'甲', u'乙', u'丙', u'丁', u'戊', u'已')
+ZHI = (u'申', u'酉', u'戌', u'亥', u'子', u'丑',
+       u'寅', u'卯', u'辰', u'巳', u'午', u'未')
+SX = (u'猴', u'鸡', u'狗', u'猪', u'鼠', u'牛',
+      u'虎', u'兔', u'龙', u'蛇', u'马', u'羊')
+
 
 def initdb():
     try:
@@ -188,7 +194,10 @@ def gen_cal(start, end, fp):
     for r in rows:
         dt = datetime.strptime(r['date'], '%Y-%m-%d')
 
-        ld = [r['lunardate']]
+        if r['lunardate'] in CN_MON.keys():
+            ld = ['%s%s' % (lunaryear(r['date']), r['lunardate'])]
+        else:
+            ld = [r['lunardate']]
         if r['holiday']:
             ld.append(r['holiday'])
         if r['jieqi']:
@@ -276,6 +285,31 @@ def update_holiday():
         print 'update %s' % arg[1]
     conn.commit()
     print 'Chinese Traditional Holiday updated'
+
+
+def ganzhi(lyear):
+    '''generate 干支年份
+    Args:
+        lyear: four digit lyear, either integer or string
+    Return:
+        a string, e.g. 庚辰[龙]年
+    '''
+
+    g = GAN[int(str(lyear)[-1])]
+    z = ZHI[int(lyear) % 12]
+    sx = SX[int(lyear) % 12]
+    return u'%s%s[%s]' % (g, z, sx)
+
+
+def lunaryear(isodate):
+    '''find lunar year for a date'''
+    sql = ('select date from ical where lunardate="正月" and '
+           'date<=? order by date desc limit 1')
+    row = query_db(sql, (isodate,), one=True)
+    res = 'Unknown'
+    if row:
+        res = ganzhi(row[0][:4])
+    return res
 
 
 def main():
