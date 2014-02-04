@@ -17,7 +17,7 @@ web so far.
 This package is released under the terms and conditions of the BSD License, a
 copy of which is include in the file COPYRIGHT.
 
-*Hong Kong Observatory* has been very kind to provide and grant the permission
+**Hong Kong Observatory** has been very kind to provide and grant the permission
 of using their convertion table, which is only for Non-Commercial use.
 
 ### How to run
@@ -31,7 +31,7 @@ calendar app.
 
 start and end date can also be specified as command line options, for example
 
-    `lunar_ical.py --start=1990-01-01 --end=2001-01-01` 
+    `lunar_ical.py --start=1990-01-01 --end=2001-01-01`
 
 The date must in ISO format.
 
@@ -42,6 +42,8 @@ iCalendar是一种通用的日历交换格式，很多软件和设备，比如go
 calendar, thunderbird + lightning插件, iphone/ipad, 安卓都支持。
 
 以前订过iCalendar格式农历日历，但慢慢地它们都停止了更新。所幸香港天文台为公众提供了从1901年到2100年间两百年的农历-公历对照表，也就是这里用到的数据。
+
+![Screenshot][]
 
 下面是覆盖前年、今年以及明年三年的日历[ics文件][iCal]链接，把它加入到你最常用的软件就可以了。
 
@@ -71,10 +73,11 @@ calendar, thunderbird + lightning插件, iphone/ipad, 安卓都支持。
 
 本项目版权使用BSD协议，请参见所附COPYRIGHT文件。
 
-感谢[香港天文台][HK_Obs]为公众提供并授权本项目使用农历-公历对照数据，该部分数据仅限非商业用途。
+感谢[香港天文台][HK_Obs]为公众提供并授权本项目使用其农历-公历对照数据，该部分数据仅限非商业用途。
 
 
 [Contact me](mailto: weichen302@gmail.com)
 
 [iCal]: https://raw.github.com/infinet/lunar-calender/master/chinese_lunar_prev_year_next_year.ics
 [HK_Obs]: http://data.weather.gov.hk/gts/time/conversion1_text_c.htm
+[Screenshot]: http://infinet.github.io/images/lunar_calendar.jpg
