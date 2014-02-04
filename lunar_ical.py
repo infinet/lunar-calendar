@@ -1,7 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-'''get lunar calendar from hk observatory '''
+'''get lunar calendar from hk observatory
+
+Hong Kong Observatory has been very kind to grant the permission for using the
+lunar calendar data from their website.
+
+'''
 
 __license__ = 'BSD'
 __copyright__ = '2014, Chen Wei <weichen302@gmail.com>'
@@ -24,7 +29,7 @@ APPDIR = os.path.abspath(os.path.dirname(__file__))
 DB_FILE = os.path.join(APPDIR, 'db', 'lunarcal.sqlite')
 RE_CAL = re.compile(u'(\d{4})年(\d{1,2})月(\d{1,2})日')
 PROXY = {'http': 'http://localhost:8001'}
-URL = 'http://gb.weather.gov.hk/gts/time/calendar/text/T%dc.txt'
+URL = 'http://data.weather.gov.hk/gts/time/calendar/text/T%dc.txt'
 OUTPUT = os.path.join(APPDIR, 'chinese_lunar_%s_%s.ics')
 
 ICAL_HEAD = ('BEGIN:VCALENDAR\n'
