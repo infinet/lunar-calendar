@@ -1,4 +1,4 @@
-### lunar calender
+### Chinese Lunar Calender
 
 Google, Apple, and Microsoft used to provide Chinese Lunar Calender in iCalender
 format, but most links were died over years. It is become hard to find a usable
@@ -15,12 +15,22 @@ Lunar calendar beyond 1901-2100 range can also be generated. The
 lunarcalbase.py uses VSOP87 planetary theory and LEA-406 lunar theory to
 find solar terms and moon phases, then compute the calendar.
 
-For LEA-406 and VSOP87, both the full version and truncated version are
-included. The full version is slightly slower. Their accuracy of finding
-apparent Sun and Moon longitude are showed in following figures.
+Both the full version and truncated version of LEA-406 and VSOP87 are included.
+The full version is slightly slower. Their accuracy of finding apparent Sun and
+Moon longitude compare to the DE431 based JPL Horizon are showed in following
+figures.
 
 ![aa_full][]
 ![aa_trunc][]
+
+For the time span from 1949 to 2100, lunar calendar created by above algorithm,
+has only two discrepancies compare to the HKO's version: one is a solar term on
+1979-01-20, the other is a new moon on 2057-09-29. It caused by few seconds of
+error happens around midnight(UTC +8).
+
+The official timezone before 1949 is slightly different than the current UTC +8
+therefor the computed lunar calendar may not represent history accurately.
+
 
 ### License
 

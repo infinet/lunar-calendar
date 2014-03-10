@@ -3,13 +3,13 @@
 
 from numpy import *
 import numexpr as ne
+import re
 
 J2000 = 2451545.0
 SYNODIC_MONTH = 29.53
 MOON_SPEED = 2 * pi / SYNODIC_MONTH
 TROPICAL_YEAR = 365.24
 SUN_SPEED = 2 * pi / TROPICAL_YEAR
-UNIXEPOCH = 2440587.50046567898243  # JDE for 1970-01-01 00:00
 ASEC2RAD = 4.848136811095359935899141e-6
 DEG2RAD = 0.017453292519943295
 ASEC360 = 1296000.0
@@ -1653,6 +1653,9 @@ class VSOP2010():
     ''' compute mean longitude of the Earth-Moon Barycenter based on VSOP2010.
     The coordinates are referred to the inertial frame defined by the dynamical
     equinox and ecliptic J2000
+
+    TODO: the mean longitude returned is 1-2 degrees away from JPL.
+
     '''
     def __init__(self):
         fp = open('/home/wei/tmp/astro/vsop2010/VSOP2010p3.dat')
@@ -1755,7 +1758,7 @@ def vsop(jde, FK5=True):
     equinox of the date,
 
     In A&A, Meeus said while the complete VSOP87 yields an accuracy of 0.01",
-    the abridge VSOP87 has an accuracy  of 1" for -2000 - +6000.
+    the A&A abridge VSOP87 has an accuracy  of 1" for -2000 - +6000.
 
     The VSOP87D table used here is a truncated version, done by the
     vsoptrunc-sph.c from Celestia.
@@ -1968,7 +1971,6 @@ def apparentmoon(jde, ignorenutation=False):
 
 def apparentsun(jde, ignorenutation=False):
     ''' calculate the apprent place of the Sun.
-    TODO: use 2014-03 cunfeng as reference, i am 0°0'2.82" off, need fix
     Arg:
         jde as jde
     Return:
@@ -2470,15 +2472,12 @@ def nutation(jde):
 # the tables M_AMP, M_PHASE, M_ARG are imported from aa_full_table
 #------------------------------------------------------------------------------
 FRM = [785939.924268, 1732564372.3047, -5.279, .006665, -5.522e-5 ]
-
 RADEG = 1.7453292519943296e-2
 RASEC = 4.8481368110953599e-6
-
+RE_FORTRAN_FMT = re.compile(r'(\d*)([A-Z]+)(\d*)\.?\d*')
 
 def fortran_parsefmt(fmt):
-    import re
     fmt = fmt.upper()
-    RE_FORTRAN_FMT = re.compile(r'(\d*)([A-Z]+)(\d*)\.?\d*')
     m = RE_FORTRAN_FMT.findall(fmt)
     fw = []
     # transform Fortran format into (rep, TYPE, width)
@@ -2688,14 +2687,6 @@ class LEA406():
         V=FRM[0]+(((FRM[4]*DTC+FRM[3])*DTC+FRM[2])*DTC+FRM[1])*DTC
 
         # numpy array operation
-        self.F0_V = around(self.F0_V, 0)
-        #F1_V = around(self.F1_V, 3) * DTC
-        #F2_V = around(self.F2_V, 0) * DTC2
-        #F3_V = around(self.F3_V, 0) * DTC3
-        #F4_V = around(self.F4_V, 0) * DTC4
-        F3_V = 0
-        F4_V = 0
-
         F1_V = self.F1_V * DTC
         F2_V = self.F2_V * DTC2
         F3_V = self.F3_V * DTC3
@@ -2707,22 +2698,6 @@ class LEA406():
              + self.AT_V  * sin(ARGS + self.CT_V)  * DTM
              + self.ATT_V * sin(ARGS + self.CTT_V) * DTM2)
         V += sum(P)
-
-        #absP = abs(P)
-        #count = 0
-        #kept_items = []
-        #for i in xrange(len(P)):
-        #    if absP[i] > 0.05:
-        #        kept_items.append(i)
-        #        count += 1
-        #print '%d significant' % count
-        #pp = []
-        #for i in kept_items:
-        #    pp.append(P[i])
-        #pp = array(pp)
-        #V += sum(pp)
-
-
         V = V * ASEC2RAD
         if not ignorenutation:
             V += nutation(jd)
@@ -2731,7 +2706,6 @@ class LEA406():
 
 def lea406(jd, ignorenutation=False):
     ''' compute moon ecliptic longitude using lea406
-    numpy is used
     '''
 
     t = (jd - J2000) / 36525.0
