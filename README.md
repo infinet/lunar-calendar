@@ -40,6 +40,17 @@ copy of which is include in the file COPYRIGHT.
 **Hong Kong Observatory** has been very kind to provide and grant the permission
 of using their convertion table, which is only for Non-Commercial use.
 
+
+### Requirement:
+
+ * Python: tested on python 2.7
+
+ * [Numpy][] and [Numexpr][]: Only needed when generate calendar by astronomical
+  algorithm. The full version of LEA-406 and VSOP87 is rather slow when compute
+  in pure python. Combine numpy and numexpr gives a perceived speed comparable
+  to original Fortran code.
+
+
 ### How to run
 
 run `lunar_ical`, it will fetch data from Hong Kong Observatory, save
@@ -103,3 +114,5 @@ calendar, thunderbird + lightning插件, iphone/ipad, 安卓都支持。
 [Screenshot]: http://infinet.github.io/images/lunar_calendar.jpg
 [aa_full]: http://infinet.github.io/images/moon-sun-full_lea406_vsop87_compare_JPL.png
 [aa_trunc]: http://infinet.github.io/images/moon-sun-trunc_lea406_vsop87_compare_JPL.png
+[Numpy]: http://www.numpy.org
+[Numexpr]: https://github.com/pydata/numexpr
