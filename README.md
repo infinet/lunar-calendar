@@ -11,6 +11,16 @@ motion of Moon is very hard to predict, especially on the long run.  Luckily
 from 1901 to 2100. It is the most trustworthy Lunar Calender I can find on the
 web so far.
 
+Lunar calendar beyond 1901-2100 range can also be generated. The
+lunarcalbase.py uses VSOP87 planetary theory and LEA-406 lunar theory to
+find solar terms and moon phases, then compute the calendar.
+
+For LEA-406 and VSOP87, both the full version and truncated version are
+included. The full version is slightly slower. Their accuracy of finding
+apparent Sun and Moon longitude are showed in following figures.
+
+![aa_full][]
+![aa_trunc][]
 
 ### License
 
@@ -81,3 +91,5 @@ calendar, thunderbird + lightning插件, iphone/ipad, 安卓都支持。
 [iCal]: https://raw.github.com/infinet/lunar-calender/master/chinese_lunar_prev_year_next_year.ics
 [HK_Obs]: http://data.weather.gov.hk/gts/time/conversion1_text_c.htm
 [Screenshot]: http://infinet.github.io/images/lunar_calendar.jpg
+[aa_full]: http://infinet.github.io/images/moon-sun-full_lea406_vsop87_compare_JPL.png
+[aa_trunc]: http://infinet.github.io/images/moon-sun-trunc_lea406_vsop87_compare_JPL.png
