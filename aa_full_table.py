@@ -1,12 +1,16 @@
 
+__license__ = 'BSD'
+__copyright__ = '2014, Chen Wei <weichen302@gmail.com>'
+__version__ = '0.0.3'
+
 from numpy import array
+
 # table for LEA-406 moon solution. Those terms are linear combination
 # of integer multipliers of 14 variables (Arg_j_, j=1,14):
 # Delaunay variables l, l', F, D;
 # mean longitude of the ascending node of the Moon {Omega};
 # mean longitudes of eight major planets {lambda}_pl_;
 # and the general precession in longitude p_A_.
-# terms of 3rd-degree and 4th-degree are ignored
 # in arcsec
 M_ARG = array([
 # 10508 terms

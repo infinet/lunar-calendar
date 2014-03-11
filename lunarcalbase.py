@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+__license__ = 'BSD'
+__copyright__ = '2014, Chen Wei <weichen302@gmail.com>'
+__version__ = '0.0.3'
+
 from aa_full import findnewmoons
 from aa_full import solarterm
 from aa_full import jdftime
@@ -48,6 +52,12 @@ CN_SOLARTERM = {-120: u'小雪',-105: u'大雪',
                  225: u'立冬', 240: u'小雪', 255: u'大雪', 270: u'冬至'}
 
 
+# calendar for this and next year are combined to generate the final output
+# cache the intermedia calendar
+CALCACHE = {'cached': []}
+MAXCACHE = 500  # max cached items
+
+
 def find_astro(year):
     ''' find new moons and solar terms needed for calculate lunar calender
     Arg:
@@ -59,7 +69,6 @@ def find_astro(year):
                placeholder for month }, ... ]
 
         '''
-
     # find all solar terms from -120 to +270 degree, negative angle means
     # search backward from Vernal Equinox
     solarterms = []
@@ -87,71 +96,61 @@ def find_astro(year):
 def mark_lunarcal_month(clc):
     ''' scan and modify the Chinese Lunar Calendar Astro list for start/end of
     Chinese Lunar year and leapmonth'''
-    nmcount = 0
-    mname = -1
-    leapyear = False
-    i = 0
 
-    # debug
-    #for x in clc:
-    #    print jdftime(x['date']), x['astro']
+    # scan last and this Winter Solstice
+    for d in clc:
+        if d['astro'] == -90:
+            lastws = d['date']
+        elif d['astro'] == 270:
+            lcend = d['date']
+            break
 
-    # mark month number of newmoon
-    while i < len(clc):
-        if clc[i]['month'] is None and clc[i]['astro'] == 'newmoon':
-            nmcount += 1
-            mname += 1
-            clc[i]['month'] = mname
-        elif clc[i]['astro'] == -90:
-            nmcount = 0
-            mname = LCSTARTMONTH
-            clc[i]['month'] = LCSTARTMONTH
-            if (clc[i + 1]['astro'] == 'newmoon' and
-                clc[i + 1]['date'] == clc[i]['date']):
-                # the next newmoon is the same day, it will be the day 1 of
-                # month 11. This newmoon doesn't included in leap year
-                # compute.
-                clc[i + 1]['month'] = LCSTARTMONTH
-                lcstart = clc[i]['date']
-            else:
-                n = i - 1
-                while n >= 0:
-                    if clc[n]['astro'] == 'newmoon':
-                        clc[n]['month'] = LCSTARTMONTH
-                        lcstart = clc[n]['date']
-                        break
-                    n -= 1
-        elif clc[i]['astro'] == 270:
-            # lunar calendar year ends with Winter Solstice
-            lcend = clc[i]['date']
+    # the newmoon contains last Winter Solstice marks start of CLC year
+    for d in clc:
+        if d['date'] <= lastws and d['astro'] == 'newmoon':
+            lcstart = d['date']
+        elif d['date'] > lastws:
+            break
 
-            for d in clc[i + 1:]:
-                if d['date'] == clc[i]['date'] and d['astro'] == 'newmoon':
-                    nmcount += 1
-                    break
-            # if there are more than 12 newmoons between two Winter
-            # Solstice, it is a leap year
-            if nmcount > 12:
-                leapyear = True
-        i += 1
+    # mark month name, 11 is the month contains Winter Solstice
+    newmoondate = [d['date'] for d in clc if d['astro'] == 'newmoon']
+    mname = 11
+    for i in xrange(len(newmoondate) - 1):
+        thisnm, nextnm = newmoondate[i], newmoondate[i + 1]
+        if thisnm < lcstart:
+            continue
 
-    # mark month number for rest of days
-    mname = -1
-    for i in xrange(len(clc)):
-        if clc[i]['month']:
-            mname = clc[i]['month']
-            if i > 0 and clc[i - 1]['date'] == clc[i]['date']:
-                clc[i - 1]['month'] = mname
-        else:
-            clc[i]['month'] = mname
+        for d in clc:
+            if thisnm <= d['date'] and d['date'] < nextnm:
+                d['month'] = mname
+            elif d['date'] >= nextnm:
+                break
+        mname += 1
 
-    # trim to days between the newmoon mark the month last Winter Solstice
-    # belongs, to this Winter Solstice(including)
+    # trim to days between two Winter Solstice
     clc = [d for d in clc if d['date'] >= lcstart and d['date'] <= lcend]
 
+    return scan_leap(clc)
+
+
+def scan_leap(clc):
+    ''' scan and change month name(number) if necessary
+    Arg:
+        clc: the astros trimmed to a CLC year
+    Return:
+        the Chinese Lunar Calendar astro with month name adjusted for leap
+
+        '''
+    lcstart, lcend = clc[0]['date'], clc[-1]['date']
     # scan for leap month
-    leap = None
-    if leapyear:
+    nmcount = 0
+    for d in clc:
+        if (d['date'] > lcstart and d['date'] <= lcend and
+                                    d['astro'] == 'newmoon'):
+            nmcount += 1
+
+    # leap year has more than 12 newmoons between two Winter Solstice
+    if nmcount > 12:
         # search leap month from LC 11, to next LC 11, which = 11 + 13
         for m in xrange(11, 25):
             foundleap = True
@@ -161,13 +160,13 @@ def mark_lunarcal_month(clc):
                 if d['month'] == m and d['astro'] % 30 == 0:
                     foundleap = False
             if foundleap:
-                leap = m
+                monthofleap = m
                 break
 
         for d in clc:
-            if d['month'] == leap:
+            if d['month'] == monthofleap:
                 d['month'] += -1 + 100  # add 100 to distinguish leap month
-            elif d['month'] > leap:
+            elif d['month'] > monthofleap:
                 d['month'] -= 1
 
     for d in clc:
@@ -187,11 +186,14 @@ def search_lunarcal(year):
         start at last LC November
     '''
 
+    global CALCACHE
+    if year in CALCACHE:
+        return CALCACHE[year]
+
     clc = find_astro(year)
     clcmonth = mark_lunarcal_month(clc)
     ystart = clcmonth[0]['date']
     yend = clcmonth[-1]['date'] + 1
-
 
     #debug
     #print
@@ -246,6 +248,12 @@ def search_lunarcal(year):
         output[ystart] = label
         ystart += 1
 
+    CALCACHE[year] = output  # cache it for future use
+    CALCACHE['cached'].append(year)
+    if len(CALCACHE['cached']) > MAXCACHE:
+        del CALCACHE[CALCACHE['cached'][0]]
+        CALCACHE['cached'].pop(0)
+
     return output
 
 
@@ -274,15 +282,22 @@ def cn_lunarcal(year):
                jdftime(jd, '%y-%m-%d', ut=False),
                 mname))
     lc.sort()
-    return lc
+
+    # convert to format that accepted by ical generator
+    rows = []
+    for x in lc:
+        rows.append({'date': x[0], 'lunardate': x[1],
+                     'holiday': None, 'jieqi': None})
+
+    #sql = ('select date, lunardate, holiday, jieqi from ical '
+    return rows
 
 
 def main():
-    #a = cn_lunarcal(2033)
-    #for x in a:
-        #print x[0], x[1]
-    find_astro(1979)
-    find_astro(2057)
+    a = cn_lunarcal(2033)
+    for x in a:
+        print x['date'], x['lunardate']
+
 
 if __name__ == "__main__":
     main()

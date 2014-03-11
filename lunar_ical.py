@@ -10,7 +10,7 @@ lunar calendar data from their website.
 
 __license__ = 'BSD'
 __copyright__ = '2014, Chen Wei <weichen302@gmail.com>'
-__version__ = '0.0.2'
+__version__ = '0.0.3'
 
 from StringIO import StringIO
 from datetime import datetime
@@ -24,11 +24,13 @@ import sqlite3
 import sys
 import urllib2
 import zlib
+from lunarcalbase import cn_lunarcal
 
 APPDIR = os.path.abspath(os.path.dirname(__file__))
 DB_FILE = os.path.join(APPDIR, 'db', 'lunarcal.sqlite')
 RE_CAL = re.compile(u'(\d{4})年(\d{1,2})月(\d{1,2})日')
-PROXY = {'http': 'http://localhost:8001'}
+#PROXY = {'http': 'http://localhost:8001'}
+PROXY = None
 URL = 'http://data.weather.gov.hk/gts/time/calendar/text/T%dc.txt'
 OUTPUT = os.path.join(APPDIR, 'chinese_lunar_%s_%s.ics')
 
@@ -91,6 +93,15 @@ def initdb():
                     jieqi TEXT)''')
     conn.commit()
     db.close()
+
+
+def printjieqi():
+    sql = 'select jieqi from ical where jieqi NOT NULL limit 28'
+    res = query_db(sql)
+    d = -75
+    for row in res:
+        print "%d: u'%s', " % (d, row[0])
+        d += 15
 
 
 def query_db(query, args=(), one=False):
@@ -193,10 +204,22 @@ def gen_cal(start, end, fp):
     Return:
         none
         '''
+    startyear = int(start[:4])
+    endyear = int(end[:4])
+    if startyear > 1900 and endyear < 2101:
+        # use Lunar Calendar from HKO
+        print 'use Lunar Calendar from HKO'
+        sql = ('select date, lunardate, holiday, jieqi from ical '
+               'where date>=? and date<=? order by date')
+        rows = query_db(sql, (start, end))
+    else:
+        # compute Lunar Calendar by astronomical algorithm
+        print 'compute Lunar Calendar by astronomical algorithm '
+        rows = []
+        for year in xrange(startyear, endyear + 1):
+            row = cn_lunarcal(year)
+            rows.extend(row)
 
-    sql = ('select date, lunardate, holiday, jieqi from ical '
-           'where date>=? and date<=? order by date')
-    rows = query_db(sql, (start, end))
     lines = [ICAL_HEAD]
     oneday = timedelta(days=1)
     for r in rows:
@@ -342,17 +365,11 @@ def main():
         print str(err)
         print helpmsg
         sys.exit(2)
-    hkstart = datetime.strptime('1901-01-01', '%Y-%m-%d')
-    hkend = datetime.strptime('2100-12-31', '%Y-%m-%d')
     for o, v in opts:
         if o == '--start':
             start = v
-            if datetime.strptime(start, '%Y-%m-%d') < hkstart:
-                sys.exit('start date must newer than 1901-01-01')
         elif o == '--end':
             end = v
-            if datetime.strptime(end, '%Y-%m-%d') > hkend:
-                sys.exit('end date must before 2100-12-31')
         elif 'h' in o:
             sys.exit(helpmsg)
 
@@ -369,5 +386,36 @@ def main():
     gen_cal(start, end, fp)
 
 
+def verify_lunarcalendar():
+    ''' verify lunar calendar against data from HKO'''
+    start = 1949
+    sql = 'select date, lunardate,jieqi from ical where date>=? and date<=?'
+    while start < 2101:
+        print 'compare %d' % start
+        ystart = '%d-01-01' % start
+        yend = '%d-12-31' % start
+        res = query_db(sql, (ystart, yend))
+        hko = []
+        for x in res:
+            if x[2]:
+                hko.append((x[0], '%s %s' % (x[1], x[2])))
+            else:
+                hko.append((x[0], x[1]))
+        aalc = cn_lunarcal(start)
+        if start == 1900:
+            for x in aalc:
+                print x[0], x[1]
+        for i in xrange(len(aalc)):
+            aaday, aaldate = aalc[i]
+            hkoday, hkoldate = hko[i]
+            #print aaday, aaldate
+            if aaday != hkoday or aaldate != hkoldate:
+                print 'AA %s %s, HKO %s %s' % (aaday, aaldate, hkoday,
+                                               hkoldate)
+        start += 1
+
+
 if __name__ == "__main__":
     main()
+    #verify_lunarcalendar()
+

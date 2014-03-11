@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+__license__ = 'BSD'
+__copyright__ = '2014, Chen Wei <weichen302@gmail.com>'
+__version__ = '0.0.3'
+
 from numpy import *
 import numexpr as ne
 from aa_full_table import *
