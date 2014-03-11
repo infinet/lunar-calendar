@@ -153,7 +153,7 @@ def browser(proxy=None):
 
 
 def parse_hko(pageurl):
-    ''' parse lunar calender from hk Obs
+    ''' parse lunar calendar from hk Obs
     Args: pageurl
     Return:
           a string contains all posts'''
@@ -197,7 +197,7 @@ def update_cal():
 
 
 def gen_cal(start, end, fp):
-    ''' generate lunar calender in iCalendar format.
+    ''' generate lunar calendar in iCalendar format.
     Args:
         start and end date in ISO format, like 2010-12-31
         fp: path to output file

@@ -59,7 +59,7 @@ MAXCACHE = 500  # max cached items
 
 
 def find_astro(year):
-    ''' find new moons and solar terms needed for calculate lunar calender
+    ''' find new moons and solar terms needed for calculate lunar calendar
     Arg:
         year is a integer
     Return:
