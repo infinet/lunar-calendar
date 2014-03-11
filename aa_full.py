@@ -1,6 +1,21 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+''' Implement astronomical algorithms for finding solar terms and moon phases.
+
+Full VSOP87D for calculate Sun's apparent longitude;
+
+Full LEA-406 for calculate Moon's apparent longitude;
+
+Truncated IAU2000B from USNO NOVAS c source is used for nutation.
+
+Reference:
+    VSOP87: ftp://ftp.imcce.fr/pub/ephem/planets/vsop87
+    LEA-406: S. M. Kudryavtsev (2007) "Long-term harmonic development of
+             lunar ephemeris", Astronomy and Astrophysics 471, 1069-1075
+
+'''
+
 __license__ = 'BSD'
 __copyright__ = '2014, Chen Wei <weichen302@gmail.com>'
 __version__ = '0.0.3'
@@ -343,7 +358,6 @@ def apparentmoon(jde, ignorenutation=False):
 
 def apparentsun(jde, ignorenutation=False):
     ''' calculate the apprent place of the Sun.
-    TODO: use 2014-03 cunfeng as reference, i am 0°0'2.82" off, need fix
     Arg:
         jde as jde
     Return:
@@ -364,39 +378,45 @@ def apparentsun(jde, ignorenutation=False):
     return normrad(geolong)
 
 
+# the higher accuracy light abberation table from A & A.
+# the first item of row is the power of time, the 3rd and 4th item are the arg
+# of sin, they have been converted into radians.
+LIGHTABBR_TABLE = [
+    [ 0, 118.568,  1.527664004990,   6283.075850600876 ],
+    [ 0,   2.476,  1.484508993906,  12566.151699456424 ],
+    [ 0,   1.376,  0.486077687339,  77713.771468687730 ],
+    [ 0,   0.119,  1.276490181677,   7860.419392621536 ],
+    [ 0,   0.114,  5.885711004647,   5753.384884566103 ],
+    [ 0,   0.086,  3.884055717388,  11506.769769132206 ],
+    [ 0,   0.078,  2.841633387025, 161000.685738008644 ],
+    [ 0,   0.054,  1.441333038870,  18849.227550057301 ],
+    [ 0,   0.052,  2.993569534399,   3930.209696310768 ],
+    [ 0,   0.034,  0.529208263814,  71430.695618086858 ],
+    [ 0,   0.033,  2.091087703461,   5884.926847413107 ],
+    [ 0,   0.023,  4.320419446313,   5223.693920276658 ],
+    [ 0,   0.023,  5.674983441420,   5507.553238331428 ],
+    [ 0,   0.021,  2.707426294193,  11790.629088932305 ],
+    [ 1,   7.311,  5.819826570714,   6283.075850600876 ],
+    [ 1,   0.305,  5.776715192860,  12566.151699456424 ],
+    [ 1,   0.010,  5.733703298774,  18849.227550057301 ],
+    [ 2,   0.309,  4.214128894867,   6283.075850600876 ],
+    [ 2,   0.021,  3.578766215288,  12566.151699456424 ],
+    [ 2,   0.004,  5.198655163283,  77713.771468687730 ],
+    [ 3,   0.010,  2.700139544566,   6283.075850600876 ],
+]
+
+
 def lightabbr_high(jd):
     '''compute light abberation based on A & A p156
     the error will be less than 0.001"
 
     '''
     t = (jd - J2000) / 365250.0
-    t2 = t * t
-    t3 = t * t2
+
     # variation of the Sun's longitude
-    #var_lon = (3548.193
-    var_lon = (3548.330
-         + 118.568 * sin(math.radians(  87.5287 + 359993.7286 * t ))
-         +   2.476 * sin(math.radians(  85.0561 + 719987.4571 * t ))
-         +   1.376 * sin(math.radians(  27.8502 +4452671.1152 * t ))
-         +   0.119 * sin(math.radians(  73.1375 + 450368.8564 * t ))
-         +   0.114 * sin(math.radians( 337.2264 + 329644.6718 * t ))
-         +   0.086 * sin(math.radians( 222.5400 + 659289.3436 * t ))
-         +   0.078 * sin(math.radians( 162.8136 +9224659.7915 * t ))
-         +   0.054 * sin(math.radians(  82.5823 +1079981.1857 * t ))
-         +   0.052 * sin(math.radians( 171.5189 + 225184.4282 * t ))
-         +   0.034 * sin(math.radians(  30.3214 +4092677.3866 * t ))
-         +   0.033 * sin(math.radians( 119.8105 + 337181.4711 * t ))
-         +   0.023 * sin(math.radians( 247.5418 + 299295.6151 * t ))
-         +   0.023 * sin(math.radians( 325.1526 + 315559.5560 * t ))
-         +   0.021 * sin(math.radians( 155.1241 + 675553.2846 * t ))
-         +   7.311 * t * sin(math.radians( 333.4515 + 359993.7286 * t ))
-         +   0.305 * t * sin(math.radians( 330.9814 + 719987.4571 * t ))
-         +   0.010 * t * sin(math.radians( 328.5170 +1079981.1857 * t ))
-         +   0.309 * t2 * sin(math.radians( 241.4518 + 359993.7286 * t ))
-         +   0.021 * t2 * sin(math.radians( 205.0482 + 719987.4571 * t ))
-         +   0.004 * t2 * sin(math.radians( 297.8610 +4452671.1152 * t ))
-         +   0.010 * t3 * sin(math.radians( 154.7066 + 359993.7286 * t ))
-          )
+    var_lon = 3548.330
+    for r in LIGHTABBR_TABLE:
+        var_lon += t ** r[0] * r[1] * sin(r[2] + r[3] * t)
 
     t = (jd - J2000) / 36525.0
     t2 = t * t
