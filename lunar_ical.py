@@ -406,7 +406,7 @@ def verify_lunarcalendar():
             for x in aalc:
                 print x[0], x[1]
         for i in xrange(len(aalc)):
-            aaday, aaldate = aalc[i]
+            aaday, aaldate = aalc[i]['date'], aalc[i]['lunardate']
             hkoday, hkoldate = hko[i]
             #print aaday, aaldate
             if aaday != hkoday or aaldate != hkoldate:
