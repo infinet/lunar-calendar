@@ -130,12 +130,9 @@ IAU2000BNutationTable = array([
 
 def vsopLx(vsopterms, t):
     ''' helper function for calculate VSOP87 '''
+
     lx = vsopterms[:, 0] * cos(vsopterms[:, 1] + vsopterms[:, 2] * t)
-    #for vsopterm in vsopterms:
-    #    A = vsopterm[0]
-    #    B = vsopterm[1]
-    #    C = vsopterm[2]
-    #    Lx += A * math.cos(B + C * t)
+
     return sum(lx)
 
 
@@ -253,7 +250,7 @@ def f_msangle(jd, angle):
     Arg:
         jd: time in JDTT
     Return:
-        angle in radians, convert to -PI to + PI range
+        angle in radians, convert to -pi to +pi range
 
         '''
     return npitopi(apparentmoon(jd, ignorenutation=True)
@@ -266,7 +263,7 @@ def solarterm(year, angle):
 
     The Sun's moving speed on ecliptical longitude is 0.04 argsecond / second,
 
-    The accuracy of abridged VSOP is 1", nutation by IAU2000B is 0.001"
+    The accuracy of nutation by IAU2000B is 0.001"
 
     Args:
         year: the year in integer
@@ -276,7 +273,7 @@ def solarterm(year, angle):
 
         '''
 
-    # mean error when compare apparentsun to NASA(1900-2100) is 0.14"
+    # mean error when compare apparentsun to NASA(1900-2100) is 0.05"
     # 0.000000005 radians = 0.001"
     ERROR = 0.000000005
 
@@ -296,11 +293,11 @@ def newmoon(jd):
     ''' search newmoon near a given date.
 
     Angle between Sun-Moon has been converted to [-pi, pi] range so the
-    function msangle is continuous in that range. Use Secand method to find
+    function f_msangle is continuous in that range. Use Secand method to find
     root.
 
-    newmoon in 5 iterations, if the start is close enough, as the searching of
-    next newmoon usualy does, it may use only 3 iterations.
+    Test shows newmoon can be found in 5 iterations, if the start is close
+    enough, it may use only 3 iterations.
 
     Arg:
         jd: in JDTT
@@ -310,7 +307,7 @@ def newmoon(jd):
     '''
 
     # 0.0000001 radians is about 0.02 arcsecond, mean error of apparentmoon
-    # when compared to JPL Horizon is about 4 arcsecond
+    # when compared to JPL Horizon is about 0.7 arcsecond
     ERROR = 0.0000001
 
     # initilize x0 to the day close to newmoon
@@ -372,7 +369,6 @@ def apparentsun(jde, ignorenutation=False):
         geolong += nutation(jde)
 
     labbr = lightabbr_high(jde)
-    #print 'labbr = %s' % fmtdeg(math.degrees(labbr))
     geolong += labbr
 
     return normrad(geolong)

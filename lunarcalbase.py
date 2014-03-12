@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+''' generate Chinese Lunar Calendar by astronomical algorithms. Also mark the
+Chinese Traditional Holiday based on luar calendar '''
+
 __license__ = 'BSD'
 __copyright__ = '2014, Chen Wei <weichen302@gmail.com>'
 __version__ = '0.0.3'
@@ -176,6 +179,84 @@ def scan_leap(clc):
     return clc
 
 
+def mark_lunarcal_day(clcmonth):
+    ''' expand to whole year, mark the day of month and lunar calendar date in
+    Chinese'''
+
+    stdays= {}  # days have solar terms
+    for d in clcmonth:
+        if d['astro'] != 'newmoon':
+            stdays[d['date']] = d['astro']
+
+
+    # expand to whole year
+    start = clcmonth[0]['date']
+    yearend = clcmonth[-1]['date'] + 1
+    lcdays = []
+    while start < yearend:
+        # scan the month start belongs
+        for d in clcmonth:
+            if d['date'] > start:
+                break
+            if d['astro'] == 'newmoon':
+                monthstart = d['date']
+                mname = d['month']
+
+        day = {'date': start, 'month': mname, 'jieqi': None, 'holiday': None}
+        day['day'] = int(start + 1 - monthstart)
+
+        if start in stdays:
+            day['jieqi'] = CN_SOLARTERM[stdays[start]]
+
+        if day['day'] == 1:
+            day['lunardate'] = CN_MON[day['month']]
+        else:
+            day['lunardate'] = CN_DAY[day['day']]
+
+        lcdays.append(day)
+        start += 1
+
+    return lcdays
+
+
+def mark_holiday(clcdays):
+    ''' mark Chinese Traditional Holiday
+
+    腊八节(腊月初八)     除夕(腊月的最后一天)     春节(一月一日)
+    元宵节(一月十五日)   寒食节(清明的前一天)     端午节(五月初五)
+    七夕节(七月初七)     中元节(七月十五日)       中秋节(八月十五日)
+    重阳节(九月九日)     下元节(十月十五日)
+
+    '''
+
+    for i in xrange(len(clcdays)):
+        m, d = clcdays[i]['month'], clcdays[i]['day']
+        if m == 12 and d == 8:
+            clcdays[i]['holiday'] = u'腊八'
+        elif m == 1 and d == 1:
+            clcdays[i]['holiday'] = u'春节'
+            clcdays[i - 1]['holiday'] = u'除夕'
+        elif m == 1 and d == 15:
+            clcdays[i]['holiday'] = u'元宵'
+        elif m == 5 and d == 5:
+            clcdays[i]['holiday'] = u'端午'
+        elif m == 7 and d == 7:
+            clcdays[i]['holiday'] = u'七夕'
+        elif m == 7 and d == 15:
+            clcdays[i]['holiday'] = u'中元'
+        elif m == 8 and d == 15:
+            clcdays[i]['holiday'] = u'中秋'
+        elif m == 9 and d == 9:
+            clcdays[i]['holiday'] = u'重阳'
+        elif m == 10 and d == 15:
+            clcdays[i]['holiday'] = u'下元'
+
+        if clcdays[i]['jieqi'] == u'清明':
+            clcdays[i - 1]['holiday'] = u'寒食'
+
+    return clcdays
+
+
 def search_lunarcal(year):
     ''' search JieQi and Newmoon, step 1
 
@@ -192,61 +273,12 @@ def search_lunarcal(year):
 
     clc = find_astro(year)
     clcmonth = mark_lunarcal_month(clc)
-    ystart = clcmonth[0]['date']
-    yend = clcmonth[-1]['date'] + 1
+    clcdays = mark_lunarcal_day(clcmonth)
+    clcdays = mark_holiday(clcdays)
 
-    #debug
-    #print
-    #for x in clcmonth:
-    #    print jdftime(x['date']), x['astro'], x['date']
-
-    FLAG_NEWMOON = 1
-    FLAG_ST = 2
     output = {}
-    while ystart < yend:
-        flag = 0
-        # scan the month ystart belongs
-        for d in clcmonth:
-            if d['date'] > ystart:
-                break
-            if d['astro'] == 'newmoon':
-                monthstart = d['date']
-                mname = d['month']
-
-        # scan if the day happens to be the begining of month, or has ST, so we
-        # can choose the output date format accordingly. The day will be month
-        # name if it is the day 1 of a month; if it also has solarterm, then
-        # the name of solarterm will be append to month name; if it is not day
-        # 1 but has solarterm, then only solarterm will be displayed; if it is
-        # not begining of the month, or has solarterm, then only the date will
-        # be showed.
-
-        for d in clcmonth:
-            if d['date'] > ystart:
-                break
-
-            day = int(ystart + 1 - monthstart)
-
-            # the day we looking for is in the solarterms and newmoon table
-            if d['date'] == ystart:
-                if d['astro'] == 'newmoon':
-                    flag |= FLAG_NEWMOON
-                else:
-                    flag |= FLAG_ST
-                    angle = d['astro']
-
-        if flag == (FLAG_NEWMOON | FLAG_ST):
-            label = '%s %s' % (CN_MON[mname], CN_SOLARTERM[angle])
-        elif flag == FLAG_NEWMOON:
-            label = CN_MON[mname]
-        elif flag == FLAG_ST:
-            label = '%s %s' % (CN_DAY[day],  CN_SOLARTERM[angle])
-        else:
-            #print fmtjde2ut(jd,ut=False), s, nm, day
-            label = CN_DAY[day]
-
-        output[ystart] = label
-        ystart += 1
+    for d in clcdays:
+        output[d['date']] = d
 
     CALCACHE[year] = output  # cache it for future use
     CALCACHE['cached'].append(year)
@@ -263,8 +295,8 @@ def cn_lunarcal(year):
 
     Because there might be a leap month after this Winter Solstic, which can
     only be found by compute Calendar of next year, for example, 2033 has a
-    leap 11, calendar for this and next year are computed and combined, then
-    trim to fit into this year scale.
+    leap 11 that belongs to the next year. Calendar for this and next year are
+    computed and combined, then trim to fit into scale of this year.
 
     '''
 
@@ -276,27 +308,21 @@ def cn_lunarcal(year):
     start = jdptime('%s-%s-%s' % (year, 1, 1), '%y-%m-%d')
     end = jdptime('%s-%s-%s' % (year, 12, 31), '%y-%m-%d')
     lc = []
-    for jd, mname in cal0.iteritems():
+    for jd, day in cal0.iteritems():
+        day['date'] = jdftime(jd, '%y-%m-%d', ut=False)
         if jd >= start and jd <= end:
-            lc.append((
-               jdftime(jd, '%y-%m-%d', ut=False),
-                mname))
+            lc.append((jd, day))
+
     lc.sort()
+    res = [x[1] for x in lc]
 
-    # convert to format that accepted by ical generator
-    rows = []
-    for x in lc:
-        rows.append({'date': x[0], 'lunardate': x[1],
-                     'holiday': None, 'jieqi': None})
-
-    #sql = ('select date, lunardate, holiday, jieqi from ical '
-    return rows
+    return res
 
 
 def main():
     a = cn_lunarcal(2033)
     for x in a:
-        print x['date'], x['lunardate']
+        print x['date'], x['lunardate'], x['jieqi'], x['holiday']
 
 
 if __name__ == "__main__":

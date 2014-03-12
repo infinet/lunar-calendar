@@ -401,12 +401,12 @@ def verify_lunarcalendar():
                 hko.append((x[0], '%s %s' % (x[1], x[2])))
             else:
                 hko.append((x[0], x[1]))
+
         aalc = cn_lunarcal(start)
-        if start == 1900:
-            for x in aalc:
-                print x[0], x[1]
         for i in xrange(len(aalc)):
             aaday, aaldate = aalc[i]['date'], aalc[i]['lunardate']
+            if aalc[i]['jieqi']:
+                aaldate = '%s %s' % (aalc[i]['lunardate'], aalc[i]['jieqi'])
             hkoday, hkoldate = hko[i]
             #print aaday, aaldate
             if aaday != hkoday or aaldate != hkoldate:

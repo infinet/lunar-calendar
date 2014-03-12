@@ -120,72 +120,7 @@ IAU2000BNutationTable = array([
     [  1,  1,  2, -2, 2,       1290,       0,      0,     -556,     0,     0 ]
 ])
 
-# The abridged elp-2000 table from A&A p309, TABLE 45.A
-moon_tableA = [
-    [ 0, 0, 1, 0, 6288744, -20905355 ],
-    [ 2, 0, -1, 0, 1274027, -3699111 ],
-    [ 2, 0, 0, 0, 658314, -2955968 ],
-    [ 0, 0, 2, 0, 213618, -569925 ],
-    [ 0, 1, 0, 0, -185116, 48888 ],
-    [ 0, 0, 0, 2, -114332, -3149 ],
-    [ 2, 0, -2, 0, 58793, 246158 ],
-    [ 2, -1, -1, 0, 57066, -152138 ],
-    [ 2, 0, 1, 0, 53322, -170733 ],
-    [ 2, -1, 0, 0, 45758, -204586 ],
-    [ 0, 1, -1, 0, -40923, -129620 ],
-    [ 1, 0, 0, 0, -34720, 108743 ],
-    [ 0, 1, 1, 0, -30383, 104755 ],
-    [ 2, 0, 0, -2, 15327, 10321 ],
-    [ 0, 0, 1, 2, -12528, 0 ],
-    [ 0, 0, 1, -2, 10980, 79661 ],
-    [ 4, 0, -1, 0, 10675, -34782 ],
-    [ 0, 0, 3, 0, 10034, -23210 ],
-    [ 4, 0, -2, 0, 8548, -21636 ],
-    [ 2, 1, -1, 0, -7888, 24208 ],
-    [ 2, 1, 0, 0, -6766, 30824 ],
-    [ 1, 0, -1, 0, -5163, -8379 ],
-    [ 1, 1, 0, 0, 4987, -16675 ],
-    [ 2, -1, 1, 0, 4036, -12831 ],
-    [ 2, 0, 2, 0, 3994, -10445 ],
-    [ 4, 0, 0, 0, 3861, -11650 ],
-    [ 2, 0, -3, 0, 3665, 14403 ],
-    [ 0, 1, -2, 0, -2689, -7003 ],
-    [ 2, 0, -1, 2, -2602, 0 ],
-    [ 2, -1, -2, 0, 2390, 10056 ],
-    [ 1, 0, 1, 0, -2348, 6322 ],
-    [ 2, -2, 0, 0, 2236, -9884 ],
-    [ 0, 1, 2, 0, -2120, 5751 ],
-    [ 0, 2, 0, 0, -2069, 0 ],
-    [ 2, -2, -1, 0, 2048, -4950 ],
-    [ 2, 0, 1, -2, -1773, 4130 ],
-    [ 2, 0, 0, 2, -1595, 0 ],
-    [ 4, -1, -1, 0, 1215, -3958 ],
-    [ 0, 0, 2, 2, -1110, 0 ],
-    [ 3, 0, -1, 0, -892, 3258 ],
-    [ 2, 1, 1, 0, -810, 2616 ],
-    [ 4, -1, -2, 0, 759, -1897 ],
-    [ 0, 2, -1, 0, -713, -2117 ],
-    [ 2, 2, -1, 0, -700, 2354 ],
-    [ 2, 1, -2, 0, 691, 0 ],
-    [ 2, -1, 0, -2, 596, 0 ],
-    [ 4, 0, 1, 0, 549, -1423 ],
-    [ 0, 0, 4, 0, 537, -1117 ],
-    [ 4, -1, 0, 0, 520, -1571 ],
-    [ 1, 0, -2, 0, -487, -1739 ],
-    [ 2, 1, 0, -2, -399, 0 ],
-    [ 0, 0, 2, -2, -381, -4421 ],
-    [ 1, 1, 1, 0, 351, 0 ],
-    [ 3, 0, -2, 0, -340, 0 ],
-    [ 4, 0, -3, 0, 330, 0 ],
-    [ 2, -1, 2, 0, 327, 0 ],
-    [ 0, 2, 1, 0, -323, 1165 ],
-    [ 1, 1, -1, 0, 299, 0 ],
-    [ 2, 0, 3, 0, 294, 0 ],
-    [ 2, 0, -1, -2, 0, 8752 ]
-]
-
-
-# VSOP87D tables
+# Truncated VSOP87D tables
 earth_L0 = array([
     [ 1.75347045673, 0, 0 ],
     [ 0.03341656456, 4.66925680417, 6283.0758499914 ],
@@ -830,10 +765,6 @@ earth_R5 = array([
     # 0 terms retained
 ])
 
-
-
-
-
 # table for LEA-406 moon solution. Those terms are linear combination
 # of integer multipliers of 14 variables (Arg_j_, j=1,14):
 # Delaunay variables l, l', F, D;
@@ -842,7 +773,7 @@ earth_R5 = array([
 # and the general precession in longitude p_A_.
 # terms of 3rd-degree and 4th-degree are ignored
 # in arcsec
-# generated with threshold 0.05, average error Moon = 0.73", max 1.5"
+# average error Moon = 0.73", max 1.5"
 M_ARG = array([
 # 226 terms
     [ 485868.249036, 1717915923.21779990, 31.87920 ],
@@ -1550,9 +1481,6 @@ CV = M_PHASE * DEG2RAD
 C_V, CT_V, CTT_V = hsplit(CV, 3)
 A_V, AT_V, ATT_V = hsplit(M_AMP, 3)
 
-
-
-
 # for VSOP2010
 # Mean Longituee J2000 (radian)
 ci0 = [
@@ -1761,12 +1689,9 @@ class VSOP2010():
 
 def vsopLx(vsopterms, t):
     ''' helper function for calculate VSOP87 '''
+
     lx = vsopterms[:, 0] * cos(vsopterms[:, 1] + vsopterms[:, 2] * t)
-    #for vsopterm in vsopterms:
-    #    A = vsopterm[0]
-    #    B = vsopterm[1]
-    #    C = vsopterm[2]
-    #    Lx += A * math.cos(B + C * t)
+
     return sum(lx)
 
 
@@ -1884,7 +1809,7 @@ def f_msangle(jd, angle):
     Arg:
         jd: time in JDTT
     Return:
-        angle in radians, convert to -PI to + PI range
+        angle in radians, convert to -pi to +pi range
 
         '''
     return npitopi(apparentmoon(jd, ignorenutation=True)
@@ -1897,7 +1822,8 @@ def solarterm(year, angle):
 
     The Sun's moving speed on ecliptical longitude is 0.04 argsecond / second,
 
-    The accuracy of abridged VSOP is 1", nutation by IAU2000B is 0.001"
+    The mean error of truncated VSOP is less than 0.1", nutation by IAU2000B is
+    0.001"
 
     Args:
         year: the year in integer
@@ -1907,7 +1833,7 @@ def solarterm(year, angle):
 
         '''
 
-    # mean error when compare apparentsun to NASA(1900-2100) is 0.14"
+    # mean error when compare apparentsun to NASA(1900-2100) is 0.05"
     # 0.000000005 radians = 0.001"
     ERROR = 0.000000005
 
@@ -1917,7 +1843,6 @@ def solarterm(year, angle):
     # we searching for
     est_vejd = g2jd(year, 3, 20.5)
     x0 = est_vejd + angle * 360.0 / 365.24  # estimate
-    #x0 -= solarangle(x0, r) / SUN_SPEED  # further closing
     x1 = x0 + 0.5
 
     return rootbysecand(f_solarangle, r, x0, x1, precision=ERROR)
@@ -1927,11 +1852,11 @@ def newmoon(jd):
     ''' search newmoon near a given date.
 
     Angle between Sun-Moon has been converted to [-pi, pi] range so the
-    function msangle is continuous in that range. Use Secand method to find
+    function f_msangle is continuous in that range. Use Secand method to find
     root.
 
-    newmoon in 5 iterations, if the start is close enough, as the searching of
-    next newmoon usualy does, it may use only 3 iterations.
+    Test shows newmoon can be found in 5 iterations, if the start is close
+    enough, it may use only 3 iterations.
 
     Arg:
         jd: in JDTT
@@ -1941,7 +1866,7 @@ def newmoon(jd):
     '''
 
     # 0.0000001 radians is about 0.02 arcsecond, mean error of apparentmoon
-    # when compared to JPL Horizon is about 4 arcsecond
+    # when compared to JPL Horizon is about 0.7 arcsecond
     ERROR = 0.0000001
 
     # initilize x0 to the day close to newmoon
@@ -2003,7 +1928,6 @@ def apparentsun(jde, ignorenutation=False):
         geolong += nutation(jde)
 
     labbr = lightabbr_high(jde)
-    #print 'labbr = %s' % fmtdeg(math.degrees(labbr))
     geolong += labbr
 
     return normrad(geolong)
@@ -2493,11 +2417,8 @@ def nutation(jde):
 #    Long-term harmonic development of lunar ephemeris.
 #       Kudryavtsev S.M.  <Astron. Astrophys. 471, 1069 (2007)>
 #
-# the tables M_AMP, M_PHASE, M_ARG are imported from aa_full_table
 #------------------------------------------------------------------------------
 FRM = [785939.924268, 1732564372.3047, -5.279, .006665, -5.522e-5 ]
-RADEG = 1.7453292519943296e-2
-RASEC = 4.8481368110953599e-6
 RE_FORTRAN_FMT = re.compile(r'(\d*)([A-Z]+)(\d*)\.?\d*')
 
 def fortran_parsefmt(fmt):
@@ -2686,9 +2607,9 @@ class LEA406():
         self.A_V =array(A_V)
         self.AT_V =array(AT_V)
         self.ATT_V =array(ATT_V)
-        self.C_V =array(C_V) * RADEG
-        self.CT_V =array(CT_V) * RADEG
-        self.CTT_V =array(CTT_V) * RADEG
+        self.C_V =array(C_V) * DEG2RAD
+        self.CT_V =array(CT_V) * DEG2RAD
+        self.CTT_V =array(CTT_V) * DEG2RAD
 
         self.F0_V = array(F0_V) * 3600
         self.F1_V = array(F1_V)
