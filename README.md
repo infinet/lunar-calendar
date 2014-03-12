@@ -1,3 +1,53 @@
+### iCalendar格式的农历 节气 及传统节日
+
+iCalendar是一种通用的日历交换格式，很多软件和设备，比如google calendar, apple
+calendar, thunderbird + lightning插件, iphone/ipad, 安卓都支持。
+
+以前订过iCalendar格式农历日历，但慢慢地它们都停止了更新。所幸香港天文台为公众提
+供了从1901年到2100年间两百年的农历-公历对照表，也就是这里用到的数据。
+
+![Screenshot][]
+
+下面是覆盖前年、今年以及明年三年的日历[ics文件][iCal]链接，把它加入到你最常用的
+软件就可以了。
+
+[https://raw.github.com/infinet/lunar-calendar/master/chinese_lunar_prev_year_next_year.ics][iCal]
+
+苹果设备上应该是:
+    设置 => 邮件、通讯录、日历 => 添加账户 => 其它 => 日历 添加已订阅日历
+
+如果在Mac的*iCal*里订阅到iCloud，这个日历还可以自动推送到所有使用那个iCloud
+账户的ios设备。
+
+
+### 生成更长时段农历
+
+如果需要更长时段的农历，可以下载`lunar_ical.py`
+
+直接运行`./lunar_ical.py`会从香港天文台抓取1901到2100年间所有数据，然后生成上面
+那个前后三年时段的农历ics文件；
+
+使用参数--start和--end指定需要的起至日期, 例如:
+
+    ./lunar_ical.py --start=2010-05-01 --end=2021-12-31
+
+超出1901-2100的农历数据使用VSOP87行星理论和LEA-406月球理论生成. 以香港天文台的
+数据为标准，用此法生成的1949到2100年间农历有两处不一致：
+
+ 1）1979-01-20 大寒
+
+ 2）2057-09-29 农历九月全部日期错位一天
+
+上面两处节气及新月正好在午夜时分，数秒的计算误差就能决定该节气或新月属于前日深
+夜还是次日凌晨。
+
+### 版权
+
+本项目版权使用BSD协议，请参见所附COPYRIGHT文件。
+
+感谢[香港天文台][HK_Obs]为公众提供并授权本项目使用其农历-公历对照数据，该部分数据仅限非商业用途。
+
+
 ### Chinese Lunar Calendar
 
 Google, Apple, and Microsoft used to provide Chinese Lunar Calendar in iCalendar
@@ -65,54 +115,6 @@ start and end date can also be specified as command line options, for example
     `lunar_ical.py --start=1990-01-01 --end=2001-01-01`
 
 The date must in ISO format.
-
-
-### iCalendar格式的中国农历 节气 及传统节日
-
-iCalendar是一种通用的日历交换格式，很多软件和设备，比如google calendar, apple
-calendar, thunderbird + lightning插件, iphone/ipad, 安卓都支持。
-
-以前订过iCalendar格式农历日历，但慢慢地它们都停止了更新。所幸香港天文台为公众提供了从1901年到2100年间两百年的农历-公历对照表，也就是这里用到的数据。
-
-![Screenshot][]
-
-下面是覆盖前年、今年以及明年三年的日历[ics文件][iCal]链接，把它加入到你最常用的软件就可以了。
-
-[https://raw.github.com/infinet/lunar-calendar/master/chinese_lunar_prev_year_next_year.ics][iCal]
-
-苹果设备上应该是:
-    设置 => 邮件、通讯录、日历 => 添加账户 => 其它 => 日历 添加已订阅日历
-
-如果在Mac的*iCal*里订阅到iCloud，这个日历还可以自动推送到所有使用那个iCloud
-账户的ios设备。
-
-
-### 生成更长时段农历
-
-如果需要更长时段的农历，可以下载`lunar_ical.py`
-
-直接运行`./lunar_ical.py`会从香港天文台抓取1901到2100年间所有数据，然后生成上面
-那个前后三年时段的农历ics文件；
-
-使用参数--start和--end指定需要的起至日期, 例如:
-
-    ./lunar_ical.py --start=2010-05-01 --end=2021-12-31
-
-超出1901-2100的农历数据使用VSOP87行星理论和LEA-406月球理论生成. 以香港天文台的
-数据为标准，用此法生成的1949到2100年间农历有两处不一致：
-
- 1）1979-01-20 大寒
-
- 2）2057-09-29 农历九月全部日期错位一天
-
-上面两处节气及新月正好在午夜时分，数秒的计算误差就能决定该节气或新月属于前日深
-夜还是次日凌晨。
-
-### 版权
-
-本项目版权使用BSD协议，请参见所附COPYRIGHT文件。
-
-感谢[香港天文台][HK_Obs]为公众提供并授权本项目使用其农历-公历对照数据，该部分数据仅限非商业用途。
 
 
 [Contact me](mailto: weichen302@gmail.com)
