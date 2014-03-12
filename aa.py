@@ -1481,211 +1481,6 @@ CV = M_PHASE * DEG2RAD
 C_V, CT_V, CTT_V = hsplit(CV, 3)
 A_V, AT_V, ATT_V = hsplit(M_AMP, 3)
 
-# for VSOP2010
-# Mean Longituee J2000 (radian)
-ci0 = [
-      4.402608631669e0,        # Mercury
-      3.176134461576e0,        # Venus
-      1.753470369433e0,        # Earth-Moon Barycenter
-      6.203500014141e0,        # Mars
-      4.091362210690e0,        # Vesta
-      1.713743790353e0,        # Iris
-      5.598651923117e0,        # Bamberga
-      2.805135511956e0,        # Ceres
-      2.326992146758e0,        # Pallas
-      0.599546107035e0,        # Jupiter
-      0.874018510107e0,        # Saturn
-      5.548122539566e0,        # Uranus
-      5.311897933164e0,        # Neptune
-      0.e0,                    #
-      5.19846640063e0,         # Moon (e)
-      1.62790513602e0,         # Moon (F)
-      2.35555563875e0         # Moon (l)
-      ]
-
-# Mean Motions in longituee (radian/cy)
-ci1 = [
-      0.2608790314068555e5,    # Mercury
-      0.1021328554743445e5,    # Venus
-      0.6283075850353215e4,    # Earth-Moon Barycenter
-      0.3340612434145457e4,    # Mars
-      0.1731170540074402e4,    # Vesta
-      0.1704450784022772e4,    # Iris
-      0.1428949097282629e4,    # Bamberga
-      0.1364756486739947e4,    # Ceres
-      0.1361923496417814e4,    # Pallas
-      0.5296909615623250e3,    # Jupiter
-      0.2132990086108488e3,    # Saturn
-      0.7478165090307780e2,    # Uranus
-      0.3813292073732270e2,    # Neptune
-      0.3595362366859080e0,    # Pluto (Mu from TOP2010)
-      0.777137714481804e5,     # Moon (e)
-      0.843346615717837e5,     # Moon (F)
-      0.832869142477147e5     # Moon (l)
-]
-
-# Planetary frequency in longituee
-freqpla = [
-      0.2608790314068555e5,    # Mecrcury
-      0.1021328554743445e5,    # Venus
-      0.6283075850353215e4,    # Earth-Moon Barycenter
-      0.3340612434145457e4,    # Mars
-      0.5296909615623250e3,    # Jupiter
-      0.2132990861084880e3,    # Saturn
-      0.7478165903077800e2,    # Uranus
-      0.3813292737322700e2,    # Neptune
-      0.2533634111740826e2    # Pluto
-]
-
-
-def sunbyvsop2010(vsopobj, jde, ignorenutation=False):
-    ''' calculate the apprent place of the Sun.
-    Arg:
-        jde as jde
-    Return:
-        geocentric longitude in radians, 0 - 2pi
-
-        '''
-    heliolong = vsopobj.lon(jde)
-    geolong = heliolong + PI
-
-    #if FK5:
-        #B = vsopLx(earth_B0, t)
-        #Lp = L - 13.97 * t - 0.031 * t * t
-        #deltaL = (-0.09033 + 0.03916 *
-        #          (cos(math.radians(Lp)) + sin(math.radians(Lp))) *
-        #          tan(math.radians(B))) / 3600.0
-    # appears -0.09033 is good enough
-    #deltaL = math.radians(-0.09033 / 3600.0)
-    #geolong += deltaL
-
-    # compensate nutation
-    if not ignorenutation:
-        geolong += nutation(jde)
-
-    # compensate light aberration, A&A p152, constant of aberration
-    # k = 20.49552"
-    t = (jde - J2000) / 36525.0
-    t2 = t * t
-    t3 = t2 * t
-
-    # mean anomaly of the Sun
-    M = 357.52910 + 35999.0503 * t - 0.0001559 * t2 - 0.00000048 * t3
-
-    # the eccentricity of Earth's orbit
-    e = 0.016708617 - 0.000042037 * t - 0.0000001236 * t2
-
-    # Sun's equation of center
-    C = ((1.9146 - 0.004817 * t - 0.000014 * t2) * sin(math.radians(M))
-         + (0.019993 - 0.000101 * t) * sin(math.radians(2 * M))
-         + 0.00029 * sin(math.radians(3 * M)))
-
-    # true anomaly
-    v = M + C
-
-    # Sun's distance from the Earth, in AU
-    #R = (1.000001018 * (1 - e * e)) / (1 + e * cos(math.radians(v)))
-
-    # finally, the aberration in radians
-    labbr = (math.radians(20.49552 / 3600.0) * (1 + e * cos(math.radians(v))) /
-                                     -1.000001018)
-    #print 'labbr', fmtdeg(math.degrees(labbr))
-    geolong += labbr
-
-    return normrad(geolong)
-
-
-class VSOP2010():
-    ''' compute mean longitude of the Earth-Moon Barycenter based on VSOP2010.
-    The coordinates are referred to the inertial frame defined by the dynamical
-    equinox and ecliptic J2000
-
-    TODO: the mean longitude returned is 1-2 degrees away from JPL.
-
-    '''
-    def __init__(self):
-        fp = open('/home/wei/tmp/astro/vsop2010/VSOP2010p3.dat')
-        headfmt = '9x,3i3,i7'
-        datafmt = '6x,4i3,1x,5i3,1x,4i4,1x,i6,1x,3i3,2a24'
-        term_count = 0
-
-        # iphi: 17 numerical coefficients a(i) (i=1,17)) (integer)
-        # ss: coefficient S
-        # cc: coefficient C
-        iphi = []
-        ss = []
-        cc = []
-        self.it_count = []
-
-        islon = False
-        delnext = False
-        for line in fp:
-            if term_count == 0:
-                # ip : planete index
-                # iv : variable index. 2 = mean longitude (radian)
-                # it : time power
-                # nt : number of terms in series
-                ip, iv, it, nt = fortran_readline(line, headfmt)
-                if iv == 2:
-                    self.it_count.append(nt)
-                    if it == 1:
-                        # remove 1st term of 1st order time power
-                        delnext = True
-                    islon = True
-                else:
-                    islon = False
-                term_count = nt
-                continue
-
-            if islon and not delnext:
-                tmp = fortran_readline(line, datafmt)
-                iphi.append(tmp[:17])
-                sa = tmp[17][:20] + 'e' + tmp[17][21:]
-                ca = tmp[18][:20] + 'e' + tmp[18][21:]
-                ss.append(float(sa))
-                cc.append(float(ca))
-            elif islon and delnext:
-                delnext = False
-                term_count -= 1
-                continue
-            term_count -= 1
-
-        self.it_count[1] -= 1
-        iphi = array(iphi)
-        a_ci0 = array(ci0)
-        a_ci1 = array(ci1)
-
-        self.aa = sum(iphi * a_ci0, axis=1)
-        self.bb = sum(iphi * a_ci1, axis=1)
-        self.ss = array(ss)
-        self.cc = array(cc)
-
-    def lon(self, jd, ignorenutation=False):
-        tn = 1
-        tc = (jd - J2000) / 365250.0
-        t = []
-        for it, count in enumerate(self.it_count):
-            tmp = [tn] * count
-            t.extend(tmp)
-            tn *= tc
-        t = array(t)
-
-        aa = self.aa
-        bb = self.bb
-        ss = self.ss
-        cc = self.cc
-        arg = aa + bb * tc
-
-        v = ne.evaluate('sum(t * (ss * sin(arg) + cc * cos(arg)))')
-        v += freqpla[2] * tc
-
-        #prec = precession(jd)
-        #v += prec
-        v = normrad(v)
-        #print 'debug: %f %f ' % (t[1], v)
-
-        return v
-
 
 def vsopLx(vsopterms, t):
     ''' helper function for calculate VSOP87 '''
@@ -2008,17 +1803,18 @@ def lightabbr_high(jd):
     t3 = t * t2
 
     # mean anomaly of the Sun
-    M = 357.52910 + 35999.0503 * t - 0.0001559 * t2 - 0.00000048 * t3
+    M = (357.52910 + 35999.0503 * t - 0.0001559 * t2
+                                    - 0.00000048 * t3) * DEG2RAD
     # the eccentricity of Earth's orbit
     e = 0.016708617 - 0.000042037 * t - 0.0000001236 * t2
     # Sun's equation of center
-    C = ((1.9146 - 0.004817 * t - 0.000014 * t2) * sin(math.radians(M))
-         + (0.019993 - 0.000101 * t) * sin(math.radians(2 * M))
-         + 0.00029 * sin(math.radians(3 * M)))
+    C = ((1.9146 - 0.004817 * t - 0.000014 * t2) * sin(M)
+         + (0.019993 - 0.000101 * t) * sin(2 * M)
+         + 0.00029 * sin(3 * M)) * DEG2RAD
     # true anomaly
     v = M + C
     # Sun's distance from the Earth, in AU
-    R = (1.000001018 * (1 - e * e)) / (1 + e * cos(math.radians(v)))
+    R = (1.000001018 * (1 - e * e)) / (1 + e * cos(v))
 
     res = -0.005775518 * R * var_lon * ASEC2RAD
 
