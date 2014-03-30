@@ -32,7 +32,6 @@ static char *CN_SOLARTERM[] = {
 
 static double newmoons[MAX_NEWMOONS];
 static double solarterms[MAX_SOLARTERMS];
-static struct lunarcal *lcs[MAX_DAYS];
 static int firstnm_offset;
 
 static int cached_year[CACHESIZE];  /* caches intermedia lunar cal*/
@@ -46,7 +45,7 @@ double normjd(double jd, double tz)
     double deltat, tmp, jd_i, jd_f;
     GregorianDate g;
     g = jd2g(jd);
-    deltat = deltaT(g);
+    deltat = deltaT(g.year, g.month);
     tmp = jd + (tz * 3600.0 - deltat) / 86400.0;
     g = jd2g(tmp);
     jd_f = modf(tmp, &jd_i);
@@ -68,15 +67,11 @@ void cn_lunarcal(int year)
     len1 = get_cached_lc(thisyear, year);
     len2 = get_cached_lc(nextyear, year + 1);
 
-    /* zip */
-    GregorianDate g;
-    g.year = year;
-    g.month = 1;
-    g.day = 1;
-    ystart = g2jd(g);
-    g.month = 12;
-    g.day = 31;
-    yend = g2jd(g);
+    /* combine lunar calendars from this and next year. Leapmonth close to the
+     * end of Gregorian year can only be found by compute Lunar calendar of the
+     * next year */
+    ystart = g2jd(year, 1, 1.0);
+    yend = g2jd(year, 12, 31.0);
     k = 0;
 
     for (i = 0; i < MAX_DAYS; output[i++] = NULL)
@@ -113,7 +108,7 @@ int get_cached_lc(struct lunarcal *p[], int year)
 
     if ((k = get_cache_index(year)) > -1) {
         for (i = 0; i < MAX_DAYS; i++) {
-            if (cached_lcs[k][i] ==NULL)
+            if (cached_lcs[k][i] == NULL)
                 break;
             p[i] = cached_lcs[k][i];
         }
@@ -133,12 +128,11 @@ int get_cached_lc(struct lunarcal *p[], int year)
         est_nm = jd_nm + SYNODIC_MONTH;
     }
 
-    len = mark_month_day();
-    for (i = 0; i < MAX_DAYS; i++) {
+    len = mark_month_day(p);
+    for (i = 0; i < len; i++) {
         if (cachep > CACHESIZE)
             cachep = 0;
-        cached_lcs[cachep][i] = lcs[i];
-        p[i] = lcs[i];
+        cached_lcs[cachep][i] = p[i];
     }
 
     /* add to cache */
@@ -148,7 +142,7 @@ int get_cached_lc(struct lunarcal *p[], int year)
 
 
 /* mark month and day number, solarterms */
-int mark_month_day(void)
+int mark_month_day(struct lunarcal *lcs[])
 {
     int i, k, len;
     int leapmonth, month;

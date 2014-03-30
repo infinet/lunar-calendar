@@ -110,11 +110,8 @@ double solarterm(int year, double angle)
     double ERROR, r, est_vejd, x0, x1;
     ERROR = 0.000000005;
 
-    GregorianDate ve; /* estimated date of Vernal Equinox, March 20.5 UTC0 */
-    ve.year = year;
-    ve.month = 3;
-    ve.day = 20.5;
-    est_vejd = g2jd(ve);
+    /* estimated date of Vernal Equinox, March 20.5 UTC0 */
+    est_vejd = g2jd(year, 3, 20.5);
 
     /* negative angle means search backward from Vernal Equinox.
      * Initialize x0 to the day which apparent Sun longitude close to the

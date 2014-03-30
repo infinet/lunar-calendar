@@ -36,9 +36,9 @@ double jdptime(char *isodt, char *fmt, double tz, int isut);
 
 size_t jdftime(char *isodt, double jd, char *fmt, double tz, int isut);
 
-double g2jd(GregorianDate d);
+double g2jd(int year, int month, double day);
 
-double deltaT(GregorianDate g);
+double deltaT(int year, int month);
 
 double apparentsun(double jd, int ignorenutation);
 

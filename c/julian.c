@@ -9,28 +9,28 @@
 #include "astro.h"
 
 /* convert a Gregorian date to JD from AA, p61 */
-double g2jd(GregorianDate d)
+double g2jd(int year, int month, double day)
 {
-    if (d.month <= 2) {
-        d.year -= 1;
-        d.month += 12;
+    if (month <= 2) {
+        year -= 1;
+        month += 12;
     }
 
     int a, b, isjulian;
     double jd;
 
-    a = (int) (d.year / 100);
+    a = (int) (year / 100);
     isjulian = 0;
-    if (d.year < 1582) {
+    if (year < 1582) {
         isjulian = 1;
-    } else if (d.year == 1582) {
-        if (d.month  < 10)
+    } else if (year == 1582) {
+        if (month  < 10)
             isjulian = 1;
 
-        if (d.month == 10 && d.day <= 5)
+        if (month == 10 && day <= 5.0)
             isjulian = 1;
 
-        if (d.month == 10 && d.day > 5 && d.day < 15)
+        if (month == 10 && day > 5.0 && day < 15.0)
             return 2299160.5;
     }
 
@@ -40,8 +40,8 @@ double g2jd(GregorianDate d)
         b = 2 - a + (int) (a / 4);
 
     /* 30.6001 is a hack Meeus suggested */
-    jd =  (int) (365.25 * (d.year + 4716)) + (int) (30.6001 * (d.month + 1))
-          + d.day + b - 1524.5;
+    jd =  (int) (365.25 * (year + 4716)) + (int) (30.6001 * (month + 1))
+          + day + b - 1524.5;
     return jd;
 }
 
@@ -138,7 +138,7 @@ double jdptime(char *isodt, char *fmt, double tz, int isut)
     d += (hour * 3600.0 + minute * 60.0 + sec) / 86400.0;
     g.day = d;
 
-    return g2jd(g);
+    return g2jd(g.year, g.month, g.day);
 }
 
 /*  format a Julian Day to ISO format datetime
@@ -164,7 +164,7 @@ size_t jdftime(char *isodt, double jd, char *fmt, double tz, int isut)
     /* char isodt[ISODTLEN]; */
     g = jd2g(jd);
 
-    deltat = isut ? deltaT(g) : 0;
+    deltat = isut ? deltaT(g.year, g.month) : 0;
 
     /* convert jd to seconds, then adjust deltat */
     utsec = jd * 86400.0 + tz * 3600.0 - deltat;
@@ -266,11 +266,9 @@ size_t jdftime(char *isodt, double jd, char *fmt, double tz, int isut)
      Horizon
 
  */
-double deltaT(GregorianDate g) {
-    int year;
+double deltaT(int year, int month) {
     double y, m,  u;
-    year = g.year;
-    m = (double) g.month;
+    m = (double) month;
     y = year + (m - 0.5) / 12.0;
     if (year < -500) {
         u = (year - 1820) / 100.0;

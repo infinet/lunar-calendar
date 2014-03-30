@@ -22,12 +22,9 @@ double jd2year(double jd);
 double jd2year(double jd)
 {
     double fyear, jdyearstart;
-    GregorianDate tmp, yearstart ;
+    GregorianDate tmp;
     tmp = jd2g(jd);
-    yearstart.year = tmp.year;
-    yearstart.month = 1;
-    yearstart.day = 1;
-    jdyearstart = g2jd(yearstart);
+    jdyearstart = g2jd(tmp.year, 1, 1.0);
 
     fyear = (double) tmp.year + (jd - jdyearstart) / 365.0;
     return fyear;
@@ -46,16 +43,12 @@ void testdeltat()
     jdftime(strout, jd, "%y-%m-%d %H:%M", 0, 0);
     printf("jdftime output = %s\n", strout);
 
-    GregorianDate g;
     int i,year;
     double deltat;
     year = -500;
     for (i = 0; i < 20; i++) {
-        g.year = year;
-        g.month = 1;
-        g.day = 0;
-        deltat = deltaT(g);
-        printf("%d   = %.2f\n", g.year, deltat);
+        deltat = deltaT(year, 1);
+        printf("%d   = %.2f\n", year, deltat);
         year += 100;
     }
     return;
@@ -67,16 +60,12 @@ void testnewmoon_solarterm(void)
     double newmoons[NMCOUNT];
     double jd;
     //jd = jdptime("2014-01-01 18:00", "%y-%m-%d %H:%M", 0, 0);
-    GregorianDate g;
     int year = 2000;
     int n;
     char isodt[30];
     int i;
     for (n = 0; n < 5; n++) {
-        g.year = year;
-        g.month = 1;
-        g.day = 1;
-        jd = g2jd(g);
+        jd = g2jd(year, 1, 1.0);
         findnewmoons(newmoons, NMCOUNT, jd);
         year += 1;
     }
@@ -179,7 +168,7 @@ void verify_apparent_sun_moon(void)
 
     lensun  = parsejplhorizon("jpl_sun.txt",  jplsun);
     lenmoon = parsejplhorizon("jpl_moon.txt", jplmoon);
-    step = 50;
+    step = 1;
     i = 0;
     count = 0;
     delta_sun_n = 0;

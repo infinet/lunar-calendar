@@ -19,7 +19,7 @@ double normjd(double jd, double tz);
 
 int find_leap(void);
 
-int mark_month_day(void);
+int mark_month_day(struct lunarcal *lcs[]);
 
 struct lunarcal *lcalloc(double jd);
 
