@@ -110,20 +110,22 @@ file, which covers from the previous to the end of next year.
 Try the Chinese Lunar Calendar by add this [ics file][iCal] to your favorite
 calendar app.
 
-start and end date can also be specified as command line options, for example
+start and end date can also be specified as command line options, for example:
 
-    `lunar_ical.py --start=1990-01-01 --end=2001-01-01`
+    ./lunar_ical.py --start=1990-01-01 --end=2001-01-01
 
 The date must in ISO format.
 
 
-There is a C version under *c subdirectory*, run `make` to generate the
-executable `lunarcal`. Run `lunarcal` with year with print out the Chinese Lunar
-Calendar to terminal, for example
+There is also a C version. Run `make` to generate the executable `lunarcal`. Run
+`lunarcal` with year with print out the Chinese Lunar Calendar to terminal, for
+example:
 
-    `lunarcal 2014` 
+    ./lunarcal 2014
+
 or
-    `lunarcal 2014 2016`
+
+    ./lunarcal 2014 2016
 
 [Contact me](mailto: weichen302@gmail.com)
 
