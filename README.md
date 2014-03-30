@@ -8,7 +8,7 @@ calendar, thunderbird + lightning插件, iphone/ipad, 安卓都支持。
 
 ![Screenshot][]
 
-下面是覆盖前年、今年以及明年三年的日历[ics文件][iCal]链接，把它加入到你最常用的
+下面是覆盖去年、今年以及明年三年的日历[ics文件][iCal]链接，把它加入到你最常用的
 软件就可以了。
 
 [https://raw.github.com/infinet/lunar-calendar/master/chinese_lunar_prev_year_next_year.ics][iCal]
@@ -116,6 +116,14 @@ start and end date can also be specified as command line options, for example
 
 The date must in ISO format.
 
+
+There is a C version under *c subdirectory*, run `make` to generate the
+executable `lunarcal`. Run `lunarcal` with year with print out the Chinese Lunar
+Calendar to terminal, for example
+
+    `lunarcal 2014` 
+or
+    `lunarcal 2014 2016`
 
 [Contact me](mailto: weichen302@gmail.com)
 
