@@ -2,6 +2,7 @@
  * header for astro functions
  */
 
+#include <stdio.h>
 #define PI        3.14159265358979323846
 #define TWOPI     6.28318530717958647693
 #define RAD2DEG  57.295779513082320876798

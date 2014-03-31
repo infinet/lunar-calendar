@@ -42,6 +42,7 @@ double rootbysecand(double (*f)(double , double),
         x1 = x2;
         //printf("debug in rootbysecand: iter = %d angle = %.9f \n", i, fx1);
     }
+    printf("debug in rootbysecand: not found after %d iterations \n", i);
     return -1;
 }
 

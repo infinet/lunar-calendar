@@ -129,14 +129,15 @@ int get_cached_lc(struct lunarcal *p[], int year)
     }
 
     len = mark_month_day(p);
-    for (i = 0; i < len; i++) {
-        if (cachep > CACHESIZE)
-            cachep = 0;
-        cached_lcs[cachep][i] = p[i];
-    }
 
     /* add to cache */
+    if (cachep >= CACHESIZE)
+        cachep = 0;
+    for (i = 0; i < len; i++) {
+        cached_lcs[cachep][i] = p[i];
+    }
     cached_year[cachep++] = year;
+
     return len;
 }
 

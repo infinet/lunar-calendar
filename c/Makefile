@@ -1,9 +1,13 @@
 CC = gcc
 CFLAGS = -Wall -O2
 LIBS = -lm
-SRCS = lunarcal.c astro.c lea406.c vsop.c nutation.c julian.c lunarcalbase.c
+SRCS = lunarcal.c lunarcalbase.c lunarcalbase.h \
+	astro.c astro.h vsop.c nutation.c julian.c \
+	lea406-full.c lea406-full.h 
 OBJS = $(SRCS:.c=.o)
-TESTSRCS = testastro.c astro.c lea406.c vsop.c nutation.c julian.c lunarcalbase.c
+TESTSRCS = testastro.c \
+	astro.c astro.h vsop.c nutation.c julian.c \
+	lea406-full.c lea406-full.h 
 TESTOBJS = $(TESTSRCS:.c=.o)
 LUNARCAL = lunarcal
 TESTASTRO = testastro

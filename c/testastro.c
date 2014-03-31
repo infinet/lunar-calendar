@@ -64,14 +64,16 @@ void testnewmoon_solarterm(void)
     int n;
     char isodt[30];
     int i;
-    for (n = 0; n < 5; n++) {
+    for (n = 0; n < 50; n++) {
         jd = g2jd(year, 1, 1.0);
         findnewmoons(newmoons, NMCOUNT, jd);
         year += 1;
-    }
-    for (i = 0; i < NMCOUNT; i++) {
-        jdftime(isodt, newmoons[i], "%y-%m-%d %H:%M:%S", 8.0, 1);
-        printf("found newmoon: %s %.8f\n", isodt, newmoons[i]);
+
+        for (i = 0; i < NMCOUNT; i++) {
+            jdftime(isodt, newmoons[i], "%y-%m-%d %H:%M:%S", 8.0, 1);
+            printf("found newmoon: %s %.8f\n", isodt, newmoons[i]);
+        }
+
     }
 
     double angle;
@@ -168,7 +170,7 @@ void verify_apparent_sun_moon(void)
 
     lensun  = parsejplhorizon("jpl_sun.txt",  jplsun);
     lenmoon = parsejplhorizon("jpl_moon.txt", jplmoon);
-    step = 1;
+    step = 2;
     i = 0;
     count = 0;
     delta_sun_n = 0;

@@ -1,7 +1,7 @@
 #define MAX_SOLARTERMS 27
 #define MAX_NEWMOONS 15
 #define MAX_DAYS 450
-#define CACHESIZE 5
+#define CACHESIZE 3
 
 struct lunarcal {
     double jd;
@@ -26,5 +26,3 @@ struct lunarcal *lcalloc(double jd);
 void print_lunarcal(struct lunarcal *p[], int len);
 
 int get_cache_index(int year);
-
-
