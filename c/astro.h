@@ -16,6 +16,8 @@
 #define SUN_SPEED   TWOPI / TROPICAL_YEAR  /* longitude change per day*/
 #define NMCOUNT  15    /* default search total 15 new moons */
 #define ISODTLEN 30    /* max length of ISO date string */
+#define MAX_THREADS 32  /* max number of threads for compute lea406-full */
+#define MAX_CPUINFO_LEN 1000  /* max line buf size when parse /proc/cpuinfo */
 
 typedef struct {
     int year;
@@ -23,6 +25,10 @@ typedef struct {
     double day;
 } GregorianDate;
 
+struct worker_param {
+    int tid;
+    double tc;           /* t in century */
+};
 
 /* Function prototypes */
 
@@ -47,6 +53,8 @@ double apparentmoon(double jd, int ignorenutation);
 
 double lea406(double jd, int ignorenutation);
 
+void *lea406worker(void *args);
+
 double nutation(double jd);
 
 double lightabbr_high(double jd);
@@ -68,5 +76,6 @@ void findnewmoons(double newmoons[], int nmcount, double startjd);
 
 double solarterm(int year, double angle);
 
-
 int findastro(int year);
+
+int cpucount(void);

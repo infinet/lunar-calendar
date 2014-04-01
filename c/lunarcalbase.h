@@ -11,6 +11,12 @@ struct lunarcal {
     int day;          /* day in Lunar Calendar */
 };
 
+struct lunarcal_cache {  /* the item in cache */
+    int year;
+    int len;             /* days count of this cached lunar calendar */
+    struct lunarcal *lcs[MAX_DAYS];   /* the cached lunar calendar */
+};
+
 /* Function prototypes */
 void cn_lunarcal(int year);
 
@@ -27,3 +33,5 @@ struct lunarcal *lcalloc(double jd);
 void print_lunarcal(struct lunarcal *p[], int len);
 
 int get_cache_index(int year);
+
+void init_cache(void);

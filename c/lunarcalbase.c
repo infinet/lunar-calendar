@@ -34,8 +34,8 @@ static double newmoons[MAX_NEWMOONS];
 static double solarterms[MAX_SOLARTERMS];
 static int firstnm_offset;
 
-static int cached_year[CACHESIZE];  /* caches intermedia lunar cal*/
-static struct lunarcal *cached_lcs[CACHESIZE][MAX_DAYS];
+static struct lunarcal_cache *cached_lcs[CACHESIZE];
+static int cache_initialized = 0;  /* flag for initialized cache */
 static int cachep = 0;  /* next free location in cache */
 static int rewinded = 0;  /* cache rewinded? free pointers */
 
@@ -58,6 +58,23 @@ double normjd(double jd, double tz)
 }
 
 
+/* initialize cache storage */
+void init_cache(void)
+{
+    if (cache_initialized)
+        return;
+
+    int i;
+    struct lunarcal_cache *tmp;
+    for (i = 0; i < CACHESIZE; i++) {
+        tmp = (struct lunarcal_cache *) malloc(sizeof(struct lunarcal_cache));
+        tmp->year = -1;
+        tmp->len = -1;
+        cached_lcs[i] = tmp;
+    }
+    cache_initialized = 1;
+}
+
 void cn_lunarcal(int year)
 {
     int i, k, len1, len2;
@@ -65,6 +82,7 @@ void cn_lunarcal(int year)
     struct lunarcal *thisyear[MAX_DAYS];
     struct lunarcal *nextyear[MAX_DAYS];
     struct lunarcal *output[MAX_DAYS];
+    init_cache();
     len1 = get_cached_lc(thisyear, year);
     len2 = get_cached_lc(nextyear, year + 1);
 
@@ -75,8 +93,6 @@ void cn_lunarcal(int year)
     yend = g2jd(year, 12, 31.0);
     k = 0;
 
-    for (i = 0; i < MAX_DAYS; output[i++] = NULL)
-        ;
     for (i = 0; i < len1; i++) {
         if (thisyear[i]->jd >= ystart)
             output[k++] = thisyear[i];
@@ -94,7 +110,7 @@ int get_cache_index(int year)
 {
     int i;
     for (i = 0; i < CACHESIZE; i++) {
-        if (cached_year[i] == year)
+        if (cached_lcs[i]->year == year)
             return i;
     }
     return -1;
@@ -108,10 +124,8 @@ int get_cached_lc(struct lunarcal *p[], int year)
     double jd_nm, est_nm;
 
     if ((k = get_cache_index(year)) > -1) {
-        for (i = 0; i < MAX_DAYS; i++) {
-            if (cached_lcs[k][i] == NULL)
-                break;
-            p[i] = cached_lcs[k][i];
+        for (i = 0; i < cached_lcs[k]->len; i++) {
+            p[i] = cached_lcs[k]->lcs[i];
         }
         return i;
     }
@@ -136,12 +150,18 @@ int get_cached_lc(struct lunarcal *p[], int year)
         cachep = 0;
         rewinded = 1;
     }
+
+    if (rewinded)
+        for (i = 0; i < len; i++) {
+            free(cached_lcs[cachep]->lcs[i]);
+        }
+
     for (i = 0; i < len; i++) {
-        if (rewinded)
-            free(cached_lcs[cachep][i]);
-        cached_lcs[cachep][i] = p[i];
+        cached_lcs[cachep]->lcs[i] = p[i];
     }
-    cached_year[cachep++] = year;
+    cached_lcs[cachep]->year = year;
+    cached_lcs[cachep]->len = len;
+    cachep++;
 
     return len;
 }
@@ -154,9 +174,6 @@ int mark_month_day(struct lunarcal *lcs[])
     int leapmonth, month;
     double lc_start, lc_end, jd, month_day1;
     struct lunarcal *lc;
-
-    for (k = 0; k < MAX_DAYS; lcs[k++] = NULL)
-        ;
 
     month = 11;
     leapmonth = find_leap();

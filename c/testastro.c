@@ -170,7 +170,7 @@ void verify_apparent_sun_moon(void)
 
     lensun  = parsejplhorizon("jpl_sun.txt",  jplsun);
     lenmoon = parsejplhorizon("jpl_moon.txt", jplmoon);
-    step = 2;
+    step = 1;
     i = 0;
     count = 0;
     delta_sun_n = 0;

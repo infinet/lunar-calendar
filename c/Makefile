@@ -1,30 +1,41 @@
+
 CC = gcc
 CFLAGS = -Wall -O2
-LIBS = -lm
-SRCS = lunarcal.c lunarcalbase.c lunarcalbase.h \
-	astro.c astro.h vsop.c nutation.c julian.c \
-	lea406-full.c lea406-full.h 
-OBJS = $(SRCS:.c=.o)
-TESTSRCS = testastro.c \
-	astro.c astro.h vsop.c nutation.c julian.c \
-	lea406-full.c lea406-full.h 
-TESTOBJS = $(TESTSRCS:.c=.o)
+LIBS = -lm -lpthread
+
 LUNARCAL = lunarcal
 TESTASTRO = testastro
-EXECUTABLE = lunarcal
 
+# default target
+.PHONY : all
 all: $(LUNARCAL) $(TESTASTRO)
-	@echo all compiled
+	@echo all done!
 
-$(LUNARCAL): $(OBJS) 
-	$(CC) $(CFLAGS) -o $(LUNARCAL) $(OBJS) $(LIBS)
+OBJS =
+OBJS += astro.o
+OBJS += vsop.o
+OBJS += nutation.o
+OBJS += julian.o
+OBJS += lea406-full.o
 
-$(TESTASTRO): $(TESTOBJS) 
-	$(CC) $(CFLAGS) -o $(TESTASTRO) $(TESTOBJS) $(LIBS)
+LUNARCAL_OBJS = $(OBJS)
+LUNARCAL_OBJS += lunarcalbase.o
+LUNARCAL_OBJS += lunarcal.o
 
-.c.o:
-	$(CC) $(CFLAGS) -c $< -o $@
-	    
+TESTASTRO_OBJS = $(OBJS)
+TESTASTRO_OBJS += testastro.o
+
+$(LUNARCAL_OBJS) $(TESTASTRO_OBJS): astro.h
+lunarcalbase.o lunarcal.o: lunarcalbase.h
+lea406-full.o:  lea406-full.h
+
+$(LUNARCAL): $(LUNARCAL_OBJS)
+	$(CC) $(CFLAGS) -o $(LUNARCAL) $(LUNARCAL_OBJS) $(LIBS)
+
+$(TESTASTRO): $(TESTASTRO_OBJS)
+	$(CC) $(CFLAGS) -o $(TESTASTRO) $(TESTASTRO_OBJS) $(LIBS)
+
+
+.PHONY : clean
 clean:
 	rm -f *.o core a.out astro lunarcal testastro
-
