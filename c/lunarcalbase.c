@@ -36,7 +36,8 @@ static int firstnm_offset;
 
 static int cached_year[CACHESIZE];  /* caches intermedia lunar cal*/
 static struct lunarcal *cached_lcs[CACHESIZE][MAX_DAYS];
-int cachep = 0;  /* next free location in cache */
+static int cachep = 0;  /* next free location in cache */
+static int rewinded = 0;  /* cache rewinded? free pointers */
 
 
 /* normalize Julian Day to midnight after adjust timezone and deltaT */
@@ -117,23 +118,27 @@ int get_cached_lc(struct lunarcal *p[], int year)
 
     for (i = 0; i < MAX_SOLARTERMS; i++) {
         angle = (double) (i * 15 - 120);
-        solarterms[i] = normjd(solarterm(year, angle), 8);
+        solarterms[i] = normjd(solarterm(year, angle), TZ_CN);
     }
 
     /* search 15 newmoons start 30 days before last Winter Solstice */
     est_nm = solarterms[2] - 30;
     for (i = 0; i < MAX_NEWMOONS; i++) {
         jd_nm = newmoon(est_nm);
-        newmoons[i] = normjd(jd_nm, 8);
+        newmoons[i] = normjd(jd_nm, TZ_CN);
         est_nm = jd_nm + SYNODIC_MONTH;
     }
 
     len = mark_month_day(p);
 
     /* add to cache */
-    if (cachep >= CACHESIZE)
+    if (cachep >= CACHESIZE) {
         cachep = 0;
+        rewinded = 1;
+    }
     for (i = 0; i < len; i++) {
+        if (rewinded)
+            free(cached_lcs[cachep][i]);
         cached_lcs[cachep][i] = p[i];
     }
     cached_year[cachep++] = year;
@@ -159,7 +164,7 @@ int mark_month_day(struct lunarcal *lcs[])
     lc_end = solarterms[MAX_SOLARTERMS -1];
     jd = lc_start;
     len = 0;
-    while (jd < lc_end) {
+    while (jd < lc_end) {  /* fill in days into array lcs */
         /* scan for month jd belongs */
         for (i = firstnm_offset; i < MAX_NEWMOONS; i++) {
             if (jd < newmoons[i]) {
@@ -170,9 +175,9 @@ int mark_month_day(struct lunarcal *lcs[])
         }
 
         /* adjust leapmonth */
-        if (leapmonth > -1.0 && month == leapmonth) {
-            month = (month - 1) % 12 + 20; /* add offset 20 to distinguish */
-        } else if (leapmonth > -1.0 && month > leapmonth) {
+        if (leapmonth > -1 && month == leapmonth) {
+            month = (month - 1) % 12 + 20;  /* add offset 20 to distinguish */
+        } else if (leapmonth > -1 && month > leapmonth) {
             month = (month - 1) % 12;
         } else {
             month %= 12;
@@ -185,11 +190,10 @@ int mark_month_day(struct lunarcal *lcs[])
         jd += 1.0;
     }
 
-    /* add solar terms to tree */
+    /* modify days with solar terms */
     for (i = 0; i < MAX_SOLARTERMS - 1; i++) {
         if (solarterms[i] >= lc_start) {
-            lc = lcalloc(solarterms[i]);
-            k = (int) (lc->jd - lc_start);
+            k = (int) (solarterms[i] - lc_start);
             if (lcs[k])
                 lcs[k]->solarterm = i;
         }
@@ -218,11 +222,12 @@ int find_leap(void)
     }
 
     /* leap year has more than 12 newmoons between two Winter Solstice */
-    leapmonth = -1;
     if (nmcount > 12) {
         for (i = 1; i < MAX_NEWMOONS; i++) {
             flag = 0;
             for (n = 0; n < MAX_SOLARTERMS; n++) {
+                /* the leap month is the first month which does NOT contain
+                 * solar terms that is multiple of 30 degrees */
                 if (solarterms[n] >= newmoons[i - 1]
                         && solarterms[n] < newmoons[i]
                         && n % 2 == 0)
@@ -230,12 +235,12 @@ int find_leap(void)
             }
             if (!flag) {
                 leapmonth = 11 + i - 1 - firstnm_offset;
-                break;
+                return leapmonth;
             }
         }
     }
 
-    return leapmonth;
+    return -1;
 }
 
 
