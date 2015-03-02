@@ -1,4 +1,4 @@
-### iCalendar格式的农历 节气 及传统节日
+## iCalendar格式的农历 节气 及传统节日
 
 iCalendar是一种通用的日历交换格式，很多软件和设备，比如google calendar, apple
 calendar, thunderbird + lightning插件, iphone/ipad, 安卓都支持。
@@ -20,9 +20,16 @@ calendar, thunderbird + lightning插件, iphone/ipad, 安卓都支持。
 账户的ios设备。
 
 
+### 系统要求
+
+ * Python: python 2.7上测试可用
+
+ * [Numpy][] 和 [Numexpr][]: 纯Python速度较慢，而天文算法特别是完全版的VSOP87和LEA-406计算量尤其大，所以最好配合Numpy以加快计算速度。
+
+
 ### 生成更长时段农历
 
-如果需要更长时段的农历，可以下载`lunar_ical.py`
+如果需要更长时段的农历，请先克隆本项目。
 
 直接运行`./lunar_ical.py`会从香港天文台抓取1901到2100年间所有数据，然后生成上面
 那个前后三年时段的农历ics文件；
@@ -32,14 +39,33 @@ calendar, thunderbird + lightning插件, iphone/ipad, 安卓都支持。
     ./lunar_ical.py --start=2010-05-01 --end=2021-12-31
 
 超出1901-2100的农历数据使用VSOP87行星理论和LEA-406月球理论生成. 以香港天文台的
-数据为标准，用此法生成的1949到2100年间农历有两处不一致：
+数据(更新于2014年)为标准，用此法生成的1949到2100年间农历有两处不一致：
 
  1）1979-01-20 大寒
 
  2）2057-09-29 农历九月全部日期错位一天
 
-上面两处节气及新月正好在午夜时分，数秒的计算误差就能决定该节气或新月属于前日深
-夜还是次日凌晨。
+不一致的原因在于上面两处节气及新月正好跨越午夜时分，差距数秒就能影响该节气或新月的
+发生日期。由于使用不同的行星位置计算方法和Delta T估算方法，出现这种差异在所难免。
+
+
+### C 版本
+
+C版本速度更快，但暂时只在终端上输出农历，不能直接生成ical文件。
+
+编译：
+
+    $ cd c
+    $ make
+
+运行:
+
+    生成某年农历
+    $ ./lunarcal 2015
+
+    生成数年农历
+    $ ./lunarcal 2015 2019
+
 
 ### 版权
 
@@ -48,7 +74,8 @@ calendar, thunderbird + lightning插件, iphone/ipad, 安卓都支持。
 感谢[香港天文台][HK_Obs]为公众提供并授权本项目使用其农历-公历对照数据，该部分数据仅限非商业用途。
 
 
-### Chinese Lunar Calendar
+
+## Chinese Lunar Calendar
 
 Google, Apple, and Microsoft used to provide Chinese Lunar Calendar in iCalendar
 format, but most links were died over years. It is become hard to find a usable
@@ -103,29 +130,30 @@ of using their conversion table, which is only for Non-Commercial use.
 
 ### How to run
 
-run `lunar_ical`, it will fetch data from Hong Kong Observatory, save
+Run `lunar_ical`, it will fetch data from Hong Kong Observatory, save
 the data to a local sqlite database, then use that database to generate a ics
 file, which covers from the previous to the end of next year.
 
 Try the Chinese Lunar Calendar by add this [ics file][iCal] to your favorite
 calendar app.
 
-start and end date can also be specified as command line options, for example:
+Start and end date can also be specified as command line options, for example:
 
     ./lunar_ical.py --start=1990-01-01 --end=2001-01-01
 
 The date must in ISO format.
 
 
-There is also a C version. Run `make` to generate the executable `lunarcal`. Run
-`lunarcal` with year with print out the Chinese Lunar Calendar to terminal, for
-example:
+### C port
 
-    ./lunarcal 2014
+There is also a C version under directory "c". Run `make` to generate the
+executable `lunarcal`. Run `lunarcal` with year will print out the Chinese Lunar
+Calendar to terminal, for example:
 
-or
+    $ ./lunarcal 2015
+        or
+    $ ./lunarcal 2015 2019
 
-    ./lunarcal 2014 2016
 
 [Contact me](mailto: weichen302@gmail.com)
 

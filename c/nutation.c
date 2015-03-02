@@ -131,7 +131,7 @@ double nutation(double jd) {
     /* Mean longitude of the ascending node of the Moon. */
     Om = 450160.398036 - t * 6962890.5431;
 
-    double arg, lon, deplan;
+    double arg, lon, dpplan;
     lon = 0;
     int i;
     for (i = 0; i < 77; i++) {
@@ -151,8 +151,8 @@ double nutation(double jd) {
 
     /* Constant account for the missing long-period planetary terms in the
        truncated nutation model, in arcsec */
-    deplan = 0.000388;
-    lon += deplan;
+    dpplan = -0.000135;
+    lon += dpplan;
 
     lon *= ASEC2RAD;
     /* lon = fmod(lon, TWOPI); */
