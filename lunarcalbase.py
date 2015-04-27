@@ -10,8 +10,8 @@ __version__ = '0.0.3'
 
 from aa_full import findnewmoons
 from aa_full import solarterm
-from aa_full import jdftime
-from aa_full import jdptime
+from aa import jdptime
+from aa import jdftime
 
 __all__ = ['cn_lunarcal']
 
