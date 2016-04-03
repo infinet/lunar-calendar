@@ -181,6 +181,7 @@ int mark_month_day(struct lunarcal *lcs[])
     lc_start = newmoons[firstnm_offset];
     lc_end = solarterms[MAX_SOLARTERMS -1];
     jd = lc_start;
+    month_day1 = 0;
     len = 0;
     while (jd < lc_end) {  /* fill in days into array lcs */
         /* scan for month jd belongs */
