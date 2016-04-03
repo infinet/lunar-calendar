@@ -17,10 +17,19 @@ int main(int argc, char *argv[])
         exit(2);
     }
 
+    printf("BEGIN:VCALENDAR\n"
+           "PRODID:-//Chen Wei//Chinese Lunar Calendar//EN\n"
+           "VERSION:2.0\n"
+           "CALSCALE:GREGORIAN\n"
+           "METHOD:PUBLISH\n"
+           "X-WR-CALNAME:农历\n"
+           "X-WR-TIMEZONE:Asia/Shanghai\n"
+           "X-WR-CALDESC:中国农历%d-%d, 包括节气. 数据来自香港天文台\n", start, end);
     while (start <= end) {
         cn_lunarcal(start);
         start++;
     }
+    printf("END:VCALENDAR\n");
 
     return 0;
 }

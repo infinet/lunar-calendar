@@ -196,7 +196,9 @@ size_t jdftime(char *isodt, double jd, char *fmt, double tz, int isut)
     M = ms / 60;
     S = ms % 60;
 
-    if (strcmp(fmt, "%y-%m-%d") == 0) {
+    if (strcmp(fmt, "%y%m%d") == 0) {
+        sprintf(isodt, "%04d%02d%02d", y, m, d);
+    } else if (strcmp(fmt, "%y-%m-%d") == 0) {
         sprintf(isodt, "%04d-%02d-%02d", y, m, d);
     } else if (strcmp(fmt, "%y-%m-%d %H:%M") == 0) {
         sprintf(isodt, "%04d-%02d-%02d %02d:%02d", y, m, d, H, M);
