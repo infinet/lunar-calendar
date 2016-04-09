@@ -51,7 +51,7 @@ calendar, thunderbird + lightning插件, iphone/ipad, 安卓都支持。
 
 ### C 版本
 
-C版本速度更快，但暂时只在终端上输出农历，不能直接生成ical文件。
+C版本速度更快，但暂时只在终端上输出ical。用户必须使用`>`将stdout的结果导入到指定文件以生成ical文件。
 
 编译：
 
@@ -60,12 +60,11 @@ C版本速度更快，但暂时只在终端上输出农历，不能直接生成i
 
 运行:
 
-    生成某年农历
-    $ ./lunarcal 2015
+    #生成某年农历
+    $ ./lunarcal 2016 > chinese_lunar_2016.ics
 
-    生成数年农历
-    $ ./lunarcal 2015 2019
-
+    #生成数年农历
+    $ ./lunarcal 2016 2019 > chinese_lunar_2016_2019.ics
 
 ### 版权
 
@@ -148,11 +147,13 @@ The date must in ISO format.
 
 There is also a C version under directory "c". Run `make` to generate the
 executable `lunarcal`. Run `lunarcal` with year will print out the Chinese Lunar
-Calendar to terminal, for example:
+Calendar in ical format to the terminal. Use `>` to redirect the output to a file, for example:
 
-    $ ./lunarcal 2015
-        or
-    $ ./lunarcal 2015 2019
+    # Specific year
+    $ ./lunarcal 2016 > chinese_lunar_2016.ics
+
+    # or multiple years
+    $ ./lunarcal 2016 2019 > chinese_lunar_2016_2019.ics
 
 
 [Contact me](mailto: weichen302@gmail.com)
