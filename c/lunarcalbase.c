@@ -31,6 +31,20 @@ static char *CN_SOLARTERM[] = {
     "小雪", "大雪", "冬至"
 };
 
+/* 干支记年 */
+static char *GAN[] = {
+    "庚", "辛", "壬", "癸", "甲", "乙", "丙", "丁", "戊", "已"
+};
+
+static char *ZHI[] = {
+    "申", "酉", "戌", "亥", "子", "丑", "寅", "卯", "辰", "巳", "午", "未"
+};
+
+static char *SX[] = {
+    "猴", "鸡", "狗", "猪", "鼠", "牛", "虎", "兔", "龙", "蛇", "马", "羊"
+};
+
+
 static double newmoons[MAX_NEWMOONS];
 static double solarterms[MAX_SOLARTERMS];
 static int firstnm_offset;
@@ -144,6 +158,7 @@ int get_cached_lc(struct lunarcal *p[], int year)
         est_nm = jd_nm + SYNODIC_MONTH;
     }
 
+    /* fill in and mark each day with its lunar calendar year, month, day */
     len = mark_month_day(p);
 
     /* add to cache */
@@ -171,18 +186,20 @@ int get_cached_lc(struct lunarcal *p[], int year)
 /* mark month and day number, solarterms */
 int mark_month_day(struct lunarcal *lcs[])
 {
-    int i, k, len;
+    int i, k, len, idx_lc_newyear;
     int leapmonth, month;
     double lc_start, lc_end, jd, month_day1;
     struct lunarcal *lc;
+    GregorianDate g;
 
+    len = 0;
     month = 11;
+    month_day1 = 0;
+    idx_lc_newyear = -1;
     leapmonth = find_leap();
     lc_start = newmoons[firstnm_offset];
     lc_end = solarterms[MAX_SOLARTERMS -1];
     jd = lc_start;
-    month_day1 = 0;
-    len = 0;
     while (jd < lc_end) {  /* fill in days into array lcs */
         /* scan for month jd belongs */
         for (i = firstnm_offset; i < MAX_NEWMOONS; i++) {
@@ -205,9 +222,25 @@ int mark_month_day(struct lunarcal *lcs[])
         lc = lcalloc(jd);
         lc->month = month;
         lc->day = (int) (jd - month_day1 + 1);
+        if (lc->month == 1 && lc->day == 1)
+            idx_lc_newyear = len;   /* found 正月初一 */
+
         lcs[len++] = lc;
         jd += 1.0;
     }
+
+    /* mark lunar year */
+    int lyear;
+    g = jd2g(lcs[idx_lc_newyear]->jd);  /* 正月初一 in Gregorian */
+    for (i = 0; i < len; i++) {
+        if (i < idx_lc_newyear)
+            lyear = g.year - 1;
+        else
+            lyear = g.year;
+
+        lcs[i]->lyear = lyear;
+    }
+
 
     /* modify days with solar terms */
     for (i = 0; i < MAX_SOLARTERMS - 1; i++) {
@@ -270,6 +303,7 @@ struct lunarcal *lcalloc(double jd)
     if (p) {
         p->jd = jd;
         p->solarterm = -1;
+        p->lyear = -1;
         p->month = -1;
         p->day = -1;
     }
@@ -277,28 +311,46 @@ struct lunarcal *lcalloc(double jd)
 }
 
 
+/* generate 干支年份, e.g. 丙申[猴] */
+void ganzhi(char *buf, size_t buflen, int lyear)
+{
+    int idx_gan, idx_zhi, idx_sx;
+
+    idx_gan = lyear % 10;
+    idx_zhi = lyear % 12;
+    idx_sx = idx_zhi;
+    snprintf(buf, buflen, "%s%s[%s]", GAN[idx_gan], ZHI[idx_zhi], SX[idx_sx]);
+}
+
+
 void print_lunarcal(struct lunarcal *p[], int len)
 {
     int i;
-    char isodate[30];
+    char isodate[30], dtstart[30], dtend[30];
     char tmp[30];
-    char dtstart[30];
-    char dtend[30];
+    char gzyear[30];
     char utcstamp[30];
-    struct tm* utc_time;
+    struct tm *utc_time;
     time_t t = time(NULL);
+
     utc_time = gmtime(&t);
-    sprintf (utcstamp, "%04d%02d%02dT%02d%02d%02dZ", 1900+utc_time->tm_year, utc_time->tm_mon, utc_time->tm_mday, utc_time->tm_hour, utc_time->tm_min, utc_time->tm_sec);
+    sprintf(utcstamp, "%04d%02d%02dT%02d%02d%02dZ",
+            1900 + utc_time->tm_year, 1 + utc_time->tm_mon, utc_time->tm_mday,
+            utc_time->tm_hour, utc_time->tm_min, utc_time->tm_sec);
     for (i = 0; i < len; i++) {
         jdftime(isodate, p[i]->jd, "%y-%m-%d", 0, 0);
         jdftime(dtstart, p[i]->jd, "%y%m%d", 0, 0);
         jdftime(dtend, p[i]->jd, "%y%m%d", 24, 0);
-        if (p[i]->day == 1)
-            sprintf(tmp, "%s", CN_MON[p[i]->month]);
-        else
+        if (p[i]->day == 1) {
+            ganzhi(gzyear, 30, p[i]->lyear);
+            sprintf(tmp, "%s%s", gzyear, CN_MON[p[i]->month]);
+        } else {
             sprintf(tmp, "%s", CN_DAY[p[i]->day]);
+        }
+
         if (p[i]->solarterm > -1)
             sprintf(tmp, "%s %s", tmp, CN_SOLARTERM[p[i]->solarterm]);
+
         printf("BEGIN:VEVENT\n"
                "DTSTAMP:%s\n"
                "UID:%s-lc@infinet.github.io\n"

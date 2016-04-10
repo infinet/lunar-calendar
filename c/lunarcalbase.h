@@ -7,6 +7,7 @@
 struct lunarcal {
     double jd;
     int solarterm;    /* index of solarterm */
+    int lyear;        /* year in Lunar Calendar */
     int month;        /* month in Lunar Calendar */
     int day;          /* day in Lunar Calendar */
 };
@@ -27,6 +28,8 @@ double normjd(double jd, double tz);
 int find_leap(void);
 
 int mark_month_day(struct lunarcal *lcs[]);
+
+void ganzhi(char *buf, size_t buflen, int lyear);
 
 struct lunarcal *lcalloc(double jd);
 

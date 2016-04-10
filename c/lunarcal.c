@@ -24,7 +24,7 @@ int main(int argc, char *argv[])
            "METHOD:PUBLISH\n"
            "X-WR-CALNAME:农历\n"
            "X-WR-TIMEZONE:Asia/Shanghai\n"
-           "X-WR-CALDESC:中国农历%d-%d, 包括节气. 数据来自香港天文台\n", start, end);
+           "X-WR-CALDESC:中国农历%d-%d, 包括节气.\n", start, end);
     while (start <= end) {
         cn_lunarcal(start);
         start++;
