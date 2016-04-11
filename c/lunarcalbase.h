@@ -31,6 +31,8 @@ int mark_month_day(struct lunarcal *lcs[]);
 
 void ganzhi(char *buf, size_t buflen, int lyear);
 
+void holiday(char *buf, size_t buflen, int m, int d);
+
 struct lunarcal *lcalloc(double jd);
 
 void print_lunarcal(struct lunarcal *p[], int len);

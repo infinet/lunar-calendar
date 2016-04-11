@@ -323,12 +323,39 @@ void ganzhi(char *buf, size_t buflen, int lyear)
 }
 
 
+/* chinese traditional holiday */
+void holiday(char *buf, size_t buflen, int m, int d)
+{
+    char cn_hol[30] = "";
+    if (m == 12 && d == 8)
+        sprintf(cn_hol, "腊八");
+    if (m == 1 && d == 1)
+        sprintf(cn_hol, "春节");
+    if (m == 1 && d == 15)
+        sprintf(cn_hol, "元宵");
+    if (m == 5 && d == 5)
+        sprintf(cn_hol, "端午");
+    if (m == 7 && d == 7)
+        sprintf(cn_hol, "七夕");
+    if (m == 7 && d == 15)
+        sprintf(cn_hol, "中元");
+    if (m == 8 && d == 15)
+        sprintf(cn_hol, "中秋");
+    if (m == 9 && d == 9)
+        sprintf(cn_hol, "重阳");
+    if (m == 10 && d == 15)
+        sprintf(cn_hol, "下元");
+    snprintf(buf, buflen, cn_hol);
+}
+
+
 void print_lunarcal(struct lunarcal *p[], int len)
 {
     int i;
     char isodate[30], dtstart[30], dtend[30];
     char tmp[30];
     char gzyear[30];
+    char cnholiday[30];
     char utcstamp[30];
     struct tm *utc_time;
     time_t t = time(NULL);
@@ -350,6 +377,17 @@ void print_lunarcal(struct lunarcal *p[], int len)
 
         if (p[i]->solarterm > -1)
             sprintf(tmp, "%s %s", tmp, CN_SOLARTERM[p[i]->solarterm]);
+
+        holiday(cnholiday, 30, p[i]->month, p[i]->day);
+        // temp fix for 除夕 and 寒食 (need to find a way to include them into the holiday function)
+        if (p[i+1]->month == 1 && p[i+1]->day == 1)
+            sprintf(cnholiday, "除夕");
+
+        // solarterm 9 is 清明
+        if (p[i+1]->solarterm == 9)
+            sprintf(cnholiday, "寒食");
+
+        sprintf(tmp, "%s %s", tmp, cnholiday);
 
         printf("BEGIN:VEVENT\n"
                "DTSTAMP:%s\n"
