@@ -10,6 +10,7 @@ struct lunarcal {
     int lyear;        /* year in Lunar Calendar */
     int month;        /* month in Lunar Calendar */
     int day;          /* day in Lunar Calendar */
+    int holiday;      /* index of CN_HOLIDAY, -1 if not a traditional Holiday */
 };
 
 struct lunarcal_cache {  /* the item in cache */
@@ -31,7 +32,7 @@ int mark_month_day(struct lunarcal *lcs[]);
 
 void ganzhi(char *buf, size_t buflen, int lyear);
 
-void holiday(char *buf, size_t buflen, int m, int d);
+void mark_holiday(struct lunarcal *lcs[], int len);
 
 struct lunarcal *lcalloc(double jd);
 

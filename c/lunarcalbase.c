@@ -44,6 +44,11 @@ static char *SX[] = {
     "猴", "鸡", "狗", "猪", "鼠", "牛", "虎", "兔", "龙", "蛇", "马", "羊"
 };
 
+/* Traditional Chinese holiday */
+static char *CN_HOLIDAY[] = {
+    "腊八", "除夕", "春节", "元宵", "寒食",
+    "端午", "七夕", "中元", "中秋", "重阳", "下元",
+};
 
 static double newmoons[MAX_NEWMOONS];
 static double solarterms[MAX_SOLARTERMS];
@@ -161,6 +166,9 @@ int get_cached_lc(struct lunarcal *p[], int year)
     /* fill in and mark each day with its lunar calendar year, month, day */
     len = mark_month_day(p);
 
+    /* mark Traditional Chinese holiday */
+    mark_holiday(p, len);
+
     /* add to cache */
     if (cachep >= CACHESIZE) {
         cachep = 0;
@@ -241,7 +249,6 @@ int mark_month_day(struct lunarcal *lcs[])
         lcs[i]->lyear = lyear;
     }
 
-
     /* modify days with solar terms */
     for (i = 0; i < MAX_SOLARTERMS - 1; i++) {
         if (solarterms[i] >= lc_start) {
@@ -251,6 +258,48 @@ int mark_month_day(struct lunarcal *lcs[])
         }
     }
     return len;
+}
+
+
+/* mark traditional chinese holiday
+ *
+ * 腊八节(腊月初八)     除夕(腊月的最后一天)     春节(一月一日)
+ * 元宵节(一月十五日)   寒食节(清明的前一天)     端午节(五月初五)
+ * 七夕节(七月初七)     中元节(七月十五日)       中秋节(八月十五日)
+ * 重阳节(九月九日)     下元节(十月十五日)
+ */
+void mark_holiday(struct lunarcal *lcs[], int len)
+{
+    int i;
+    struct lunarcal *lc;
+
+    for (i = 0; i < len; i++) {
+        lc = lcs[i];
+        if (lc->month == 12 && lc->day == 8) {
+            lc->holiday = 0;             /* 腊八 index into CN_HOLIDAY */
+        } else if (lc->month == 1 && lc->day == 1) {
+            lcs[i - 1]->holiday = 1;     /* 除夕 */
+            lc->holiday = 2;             /* 春节 */
+        } else if (lc->month == 1 && lc->day == 15) {
+            lc->holiday = 3;             /* 元宵 */
+        } else if (lc->month == 5 && lc->day == 5) {
+            lc->holiday = 5;             /* 端午 */
+        } else if (lc->month == 7 && lc->day == 7) {
+            lc->holiday = 6;             /* 七夕 */
+        } else if (lc->month == 7 && lc->day == 15) {
+            lc->holiday = 7;             /* 中元 */
+        } else if (lc->month == 8 && lc->day == 15) {
+            lc->holiday = 8;             /* 中秋 */
+        } else if (lc->month == 9 && lc->day == 9) {
+            lc->holiday = 9;             /* 重阳 */
+        } else if (lc->month == 10 && lc->day == 15) {
+            lc->holiday = 10;            /* 下元 */
+            break;
+        }
+
+        if (lc->solarterm == 9)  /* 清明 */
+            lcs[i - 1]->holiday = 4;     /* 寒食 */
+    }
 }
 
 
@@ -306,6 +355,7 @@ struct lunarcal *lcalloc(double jd)
         p->lyear = -1;
         p->month = -1;
         p->day = -1;
+        p->holiday = -1;
     }
     return p;
 }
@@ -323,39 +373,12 @@ void ganzhi(char *buf, size_t buflen, int lyear)
 }
 
 
-/* chinese traditional holiday */
-void holiday(char *buf, size_t buflen, int m, int d)
-{
-    char cn_hol[30] = "";
-    if (m == 12 && d == 8)
-        sprintf(cn_hol, "腊八");
-    if (m == 1 && d == 1)
-        sprintf(cn_hol, "春节");
-    if (m == 1 && d == 15)
-        sprintf(cn_hol, "元宵");
-    if (m == 5 && d == 5)
-        sprintf(cn_hol, "端午");
-    if (m == 7 && d == 7)
-        sprintf(cn_hol, "七夕");
-    if (m == 7 && d == 15)
-        sprintf(cn_hol, "中元");
-    if (m == 8 && d == 15)
-        sprintf(cn_hol, "中秋");
-    if (m == 9 && d == 9)
-        sprintf(cn_hol, "重阳");
-    if (m == 10 && d == 15)
-        sprintf(cn_hol, "下元");
-    snprintf(buf, buflen, cn_hol);
-}
-
-
 void print_lunarcal(struct lunarcal *p[], int len)
 {
     int i;
     char isodate[30], dtstart[30], dtend[30];
     char tmp[30];
     char gzyear[30];
-    char cnholiday[30];
     char utcstamp[30];
     struct tm *utc_time;
     time_t t = time(NULL);
@@ -378,16 +401,8 @@ void print_lunarcal(struct lunarcal *p[], int len)
         if (p[i]->solarterm > -1)
             sprintf(tmp, "%s %s", tmp, CN_SOLARTERM[p[i]->solarterm]);
 
-        holiday(cnholiday, 30, p[i]->month, p[i]->day);
-        // temp fix for 除夕 and 寒食 (need to find a way to include them into the holiday function)
-        if (p[i+1]->month == 1 && p[i+1]->day == 1)
-            sprintf(cnholiday, "除夕");
-
-        // solarterm 9 is 清明
-        if (p[i+1]->solarterm == 9)
-            sprintf(cnholiday, "寒食");
-
-        sprintf(tmp, "%s %s", tmp, cnholiday);
+        if (p[i]->holiday > -1)
+            sprintf(tmp, "%s %s", tmp, CN_HOLIDAY[p[i]->holiday]);
 
         printf("BEGIN:VEVENT\n"
                "DTSTAMP:%s\n"
