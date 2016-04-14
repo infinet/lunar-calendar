@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <math.h>
 #include <time.h>
 #include "astro.h"
@@ -17,10 +18,10 @@ static char *CN_MON[] = {
     "十二月",
     "正月", "二月", "三月", "四月", "五月",   "六月",
     "七月", "八月", "九月", "十月", "十一月", "十二月", /* index = 12 */
-    "", "", "", "", "", "",                /* pad from index 13 to 18 */
-    "閏十一月", "閏十二月", "閏正月", "閏二月", "閏三月", "閏四月",
-    "閏五月",   "閏六月",   "閏七月", "閏八月", "閏九月", "閏十月",
-    "閏十一月", "閏十二月"
+    "", "", "", "", "", "", "",               /* pad from index 13 to 19 */
+    "閏十二月", "閏正月", "閏二月", "閏三月", "閏四月", "閏五月",
+    "閏六月",   "閏七月", "閏八月", "閏九月", "閏十月", "閏十一月",
+    "閏十二月"
 };
 
 /* solar term's angle + 120 / 15 */
@@ -51,8 +52,8 @@ static char *CN_HOLIDAY[] = {
 };
 
 static double newmoons[MAX_NEWMOONS];
-static double solarterms[MAX_SOLARTERMS];
-static int firstnm_offset;
+static struct solarterm solarterms[MAX_SOLARTERMS];
+static int nm_before_ws_index;
 
 static struct lunarcal_cache *cached_lcs[CACHESIZE];
 static int cache_initialized = 0;  /* flag for initialized cache */
@@ -88,12 +89,14 @@ void init_cache(void)
     struct lunarcal_cache *tmp;
     for (i = 0; i < CACHESIZE; i++) {
         tmp = (struct lunarcal_cache *) malloc(sizeof(struct lunarcal_cache));
+        memset(tmp, 0, sizeof(struct lunarcal_cache));
         tmp->year = -1;
         tmp->len = -1;
         cached_lcs[i] = tmp;
     }
     cache_initialized = 1;
 }
+
 
 void cn_lunarcal(int year)
 {
@@ -102,25 +105,37 @@ void cn_lunarcal(int year)
     struct lunarcal *thisyear[MAX_DAYS];
     struct lunarcal *nextyear[MAX_DAYS];
     struct lunarcal *output[MAX_DAYS];
-    init_cache();
-    len1 = get_cached_lc(thisyear, year);
-    len2 = get_cached_lc(nextyear, year + 1);
 
-    /* combine lunar calendars from this and next year. Leapmonth close to the
-     * end of Gregorian year can only be found by compute Lunar calendar of the
-     * next year */
+    init_cache();
+    len1 = get_cached_lc(thisyear, MAX_DAYS, year);
+    len2 = get_cached_lc(nextyear, MAX_DAYS, year + 1);
+
+    /*
+     * Luncar calendar calculated above starts at Lunar calendar month 11, day
+     * 1 of previous Gregorian year. Because Leapmonth close to the end of
+     * Gregorian year can only be found by compute Lunar calendar of the next
+     * year, merge lunar calendars from this and next year results the lunar
+     * calendar for this Gregorian year.
+     */
     ystart = g2jd(year, 1, 1.0);
     yend = g2jd(year, 12, 31.0);
     k = 0;
 
+
+    /*
+     * lunar calendar after this lunar calendar month 11, day 1 shall come from
+     * lc of next year
+     */
     for (i = 0; i < len1; i++) {
+        if (thisyear[i]->jd == nextyear[0]->jd)
+            break;
+
         if (thisyear[i]->jd >= ystart)
             output[k++] = thisyear[i];
     }
-    for (i = 0; i < len2; i++) {
-        if (nextyear[i]->jd <= yend)
-            output[k++] = nextyear[i];
-    }
+
+    for (i = 0; k < MAX_DAYS && i < len2 && nextyear[i]->jd <= yend; k++, i++)
+        output[k] = nextyear[i];
 
     print_lunarcal(output, k);
 }
@@ -129,34 +144,41 @@ void cn_lunarcal(int year)
 int get_cache_index(int year)
 {
     int i;
-    for (i = 0; i < CACHESIZE; i++) {
+
+    for (i = 0; i < CACHESIZE; i++)
         if (cached_lcs[i]->year == year)
             return i;
-    }
+
     return -1;
 }
 
 
-int get_cached_lc(struct lunarcal *p[], int year)
+int get_cached_lc(struct lunarcal *lcs[], int len, int year)
 {
-    int i, k, len;
-    double angle;
+    int i, k, lc_days;
     double jd_nm, est_nm;
+    int angle;
+    int start_solarterm_lon = -120;  /* 小雪 of last year */
 
-    if ((k = get_cache_index(year)) > -1) {
-        for (i = 0; i < cached_lcs[k]->len; i++) {
-            p[i] = cached_lcs[k]->lcs[i];
-        }
-        return i;
+    for (i = 0; i < len; i++)
+        lcs[i] = NULL;
+
+    if ((k = get_cache_index(year)) != -1) {
+        for (i = 0; i < cached_lcs[k]->len; i++)
+            lcs[i] = cached_lcs[k]->lcs[i];
+
+        return cached_lcs[k]->len;
     }
 
+    /* search solar terms start from 小雪 of last year */
     for (i = 0; i < MAX_SOLARTERMS; i++) {
-        angle = (double) (i * 15 - 120);
-        solarterms[i] = normjd(solarterm(year, angle), TZ_CN);
+        angle = start_solarterm_lon + i * 15;
+        solarterms[i].longitude = angle;
+        solarterms[i].jd = normjd(solarterm(year, (double) angle), TZ_CN);
     }
 
     /* search 15 newmoons start 30 days before last Winter Solstice */
-    est_nm = solarterms[2] - 30;
+    est_nm = solarterms[2].jd - 30;
     for (i = 0; i < MAX_NEWMOONS; i++) {
         jd_nm = newmoon(est_nm);
         newmoons[i] = normjd(jd_nm, TZ_CN);
@@ -164,10 +186,10 @@ int get_cached_lc(struct lunarcal *p[], int year)
     }
 
     /* fill in and mark each day with its lunar calendar year, month, day */
-    len = mark_month_day(p);
+    lc_days = mark_month_day(lcs, len);
 
     /* mark Traditional Chinese holiday */
-    mark_holiday(p, len);
+    mark_holiday(lcs, lc_days);
 
     /* add to cache */
     if (cachep >= CACHESIZE) {
@@ -181,67 +203,69 @@ int get_cached_lc(struct lunarcal *p[], int year)
         }
 
     for (i = 0; i < len; i++) {
-        cached_lcs[cachep]->lcs[i] = p[i];
+        cached_lcs[cachep]->lcs[i] = lcs[i];
     }
+
     cached_lcs[cachep]->year = year;
-    cached_lcs[cachep]->len = len;
+    cached_lcs[cachep]->len = lc_days;
     cachep++;
 
-    return len;
+    return lc_days;
 }
 
 
 /* mark month and day number, solarterms */
-int mark_month_day(struct lunarcal *lcs[])
+int mark_month_day(struct lunarcal *lcs[], int len)
 {
-    int i, k, len, idx_lc_newyear;
-    int leapmonth, month;
-    double lc_start, lc_end, jd, month_day1;
+    int i, k, n, lc_newyear;
+    int leapmonth, month, month_days;
+    double lc_november1st, end, jd;
     struct lunarcal *lc;
     GregorianDate g;
 
-    len = 0;
+    n = 0;
     month = 11;
-    month_day1 = 0;
-    idx_lc_newyear = -1;
+    month_days = 0;
+    lc_newyear = -1;
     leapmonth = find_leap();
-    lc_start = newmoons[firstnm_offset];
-    lc_end = solarterms[MAX_SOLARTERMS -1];
-    jd = lc_start;
-    while (jd < lc_end) {  /* fill in days into array lcs */
-        /* scan for month jd belongs */
-        for (i = firstnm_offset; i < MAX_NEWMOONS; i++) {
-            if (jd < newmoons[i]) {
-                month = 11 + i - 1 - firstnm_offset;
-                month_day1 = newmoons[i - 1];
-                break;
-            }
-        }
+    lc_november1st = newmoons[nm_before_ws_index];
+    end = solarterms[MAX_SOLARTERMS - 1].jd;
+
+    /* start from month 11 of previous lunar calendar year */
+    int cur_nm = nm_before_ws_index;
+    jd = lc_november1st;
+    while (jd < end && cur_nm < MAX_NEWMOONS - 1) {
+        /* the lunar calendar month jd belongs */
+        month = 11 + cur_nm - nm_before_ws_index;
+        month_days = (int) newmoons[cur_nm + 1] - newmoons[cur_nm] + 1;
 
         /* adjust leapmonth */
-        if (leapmonth > -1 && month == leapmonth) {
+        if (leapmonth != -1 && month == leapmonth)
             month = (month - 1) % 12 + 20;  /* add offset 20 to distinguish */
-        } else if (leapmonth > -1 && month > leapmonth) {
+        else if (leapmonth != -1 && month > leapmonth)
             month = (month - 1) % 12;
-        } else {
+        else
             month %= 12;
+
+        if (month == 1)
+            lc_newyear = n;   /* found 正月初一 */
+
+        for (i = 0; i < month_days; i++) {
+            lc = lcalloc(jd);
+            lc->month = month;
+            lc->day = i + 1;
+            lcs[n++] = lc;
+            jd += 1.0;
         }
 
-        lc = lcalloc(jd);
-        lc->month = month;
-        lc->day = (int) (jd - month_day1 + 1);
-        if (lc->month == 1 && lc->day == 1)
-            idx_lc_newyear = len;   /* found 正月初一 */
-
-        lcs[len++] = lc;
-        jd += 1.0;
+        cur_nm++;
     }
 
     /* mark lunar year */
     int lyear;
-    g = jd2g(lcs[idx_lc_newyear]->jd);  /* 正月初一 in Gregorian */
-    for (i = 0; i < len; i++) {
-        if (i < idx_lc_newyear)
+    g = jd2g(lcs[lc_newyear]->jd);  /* 正月初一 in Gregorian */
+    for (i = 0; i < n; i++) {
+        if (i < lc_newyear)
             lyear = g.year - 1;
         else
             lyear = g.year;
@@ -249,19 +273,21 @@ int mark_month_day(struct lunarcal *lcs[])
         lcs[i]->lyear = lyear;
     }
 
-    /* modify days with solar terms */
+    /* mark solarterms */
     for (i = 0; i < MAX_SOLARTERMS - 1; i++) {
-        if (solarterms[i] >= lc_start) {
-            k = (int) (solarterms[i] - lc_start);
+        if (solarterms[i].jd >= lc_november1st) {
+            k = (int) (solarterms[i].jd - lc_november1st);
             if (lcs[k])
                 lcs[k]->solarterm = i;
         }
     }
-    return len;
+
+    return n;
 }
 
 
-/* mark traditional chinese holiday
+/*
+ * mark traditional chinese holiday
  *
  * 腊八节(腊月初八)     除夕(腊月的最后一天)     春节(一月一日)
  * 元宵节(一月十五日)   寒食节(清明的前一天)     端午节(五月初五)
@@ -275,23 +301,27 @@ void mark_holiday(struct lunarcal *lcs[], int len)
 
     for (i = 0; i < len; i++) {
         lc = lcs[i];
-        if (lc->month == 12 && lc->day == 8) {
+        if (lc->month == 0 && lc->day == 8) {
             lc->holiday = 0;             /* 腊八 index into CN_HOLIDAY */
+            i += 15;            /* fastforward */
         } else if (lc->month == 1 && lc->day == 1) {
             lcs[i - 1]->holiday = 1;     /* 除夕 */
             lc->holiday = 2;             /* 春节 */
-        } else if (lc->month == 1 && lc->day == 15) {
-            lc->holiday = 3;             /* 元宵 */
+            lcs[i + 14]->holiday = 3;    /* 元宵 */
+            i += 20;        /* fastforward to 清明 */
         } else if (lc->month == 5 && lc->day == 5) {
             lc->holiday = 5;             /* 端午 */
+            i += 2 * 27;
         } else if (lc->month == 7 && lc->day == 7) {
             lc->holiday = 6;             /* 七夕 */
-        } else if (lc->month == 7 && lc->day == 15) {
-            lc->holiday = 7;             /* 中元 */
+            lcs[i + 8]->holiday = 7;     /* 中元 */
+            i += 27;
         } else if (lc->month == 8 && lc->day == 15) {
             lc->holiday = 8;             /* 中秋 */
+            i += 20;
         } else if (lc->month == 9 && lc->day == 9) {
             lc->holiday = 9;             /* 重阳 */
+            i += 27;
         } else if (lc->month == 10 && lc->day == 15) {
             lc->holiday = 10;            /* 下元 */
             break;
@@ -303,51 +333,75 @@ void mark_holiday(struct lunarcal *lcs[], int len)
 }
 
 
+/*
+ * find last newmoon before Winter Solstic and determin the leapmonth
+ *
+ * Return: -1 if not a leap year
+ *         values other than -1 indicate leapmonth, count from 11,
+ *             12 for leap lc month 11,
+ *             13 for leap lc month 12,
+ *             14 for leap lc month 1,
+ *             ...
+ */
 int find_leap(void)
 {
-    /* count newmoons between two Winter Solstice */
-    int nmcount, flag, leapmonth, i, n;
-    nmcount = 0;
-    for (i = 0; i < MAX_NEWMOONS; i++) {
-        if (newmoons[i] > solarterms[2]
-            && newmoons[i] <= solarterms[MAX_SOLARTERMS - 1])
-            nmcount += 1;
-    }
+    int nmcount, found_leap, leapmonth, i, n;
+    double first_winter_solstice = solarterms[2].jd;
+    double second_winter_solstice = solarterms[26].jd;
 
-    /* first new moon of new year */
+    /*
+     * find the last new moon before first Winter Solstic
+     * the lunar calendar month that Winter Solstic belongs is always month 11,
+     */
     for (i = 0; i < MAX_NEWMOONS; i++) {
-        if (newmoons[i] > solarterms[2]) {
-            firstnm_offset = i - 1;
+        if (newmoons[i] > first_winter_solstice) {
+            nm_before_ws_index = i - 1;
             break;
         }
     }
 
+    /* count newmoons between two Winter Solstice */
+    nmcount = 0;
+    for (i = 0; i < MAX_NEWMOONS; i++) {
+        if (newmoons[i] > first_winter_solstice &&
+            newmoons[i] <= second_winter_solstice)
+                nmcount += 1;
+    }
+
     /* leap year has more than 12 newmoons between two Winter Solstice */
-    if (nmcount > 12) {
-        for (i = 1; i < MAX_NEWMOONS; i++) {
-            flag = 0;
-            for (n = 0; n < MAX_SOLARTERMS; n++) {
-                /* the leap month is the first month which does NOT contain
-                 * solar terms that is multiple of 30 degrees */
-                if (solarterms[n] >= newmoons[i - 1]
-                        && solarterms[n] < newmoons[i]
-                        && n % 2 == 0)
-                    flag = 1;
-            }
-            if (!flag) {
-                leapmonth = 11 + i - 1 - firstnm_offset;
-                return leapmonth;
-            }
+    leapmonth = -1;
+    if (nmcount <= 12)
+        return leapmonth;
+
+    /*
+     * the leap month is the first lunar calendar month which does NOT contain
+     * solar terms that is multiple of 30 degrees
+     */
+    for (i = 0; i < MAX_NEWMOONS - 1; i++) {
+        found_leap = 1;
+        for (n = 0; n < MAX_SOLARTERMS; n++) {
+            if (solarterms[n].jd >= newmoons[i + 1])
+                break;
+
+            if (solarterms[n].jd >= newmoons[i] &&
+                solarterms[n].longitude % 30 == 0)
+                    found_leap = 0;
+        }
+
+        if (found_leap) {
+            leapmonth = 11 + i - nm_before_ws_index;
+            break;
         }
     }
 
-    return -1;
+    return leapmonth;
 }
 
 
 struct lunarcal *lcalloc(double jd)
 {
     struct lunarcal *p;
+
     p = (struct lunarcal *) malloc(sizeof(struct lunarcal));
     if (p) {
         p->jd = jd;
@@ -357,6 +411,7 @@ struct lunarcal *lcalloc(double jd)
         p->day = -1;
         p->holiday = -1;
     }
+
     return p;
 }
 

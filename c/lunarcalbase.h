@@ -4,6 +4,11 @@
 #define CACHESIZE 3
 #define TZ_CN 8
 
+struct solarterm {
+    double jd;
+    int longitude;
+};
+
 struct lunarcal {
     double jd;
     int solarterm;    /* index of solarterm */
@@ -22,13 +27,13 @@ struct lunarcal_cache {  /* the item in cache */
 /* Function prototypes */
 void cn_lunarcal(int year);
 
-int get_cached_lc(struct lunarcal *p[], int year);
+int get_cached_lc(struct lunarcal *lcs[], int len, int year);
 
 double normjd(double jd, double tz);
 
 int find_leap(void);
 
-int mark_month_day(struct lunarcal *lcs[]);
+int mark_month_day(struct lunarcal *lcs[], int len);
 
 void ganzhi(char *buf, size_t buflen, int lyear);
 
