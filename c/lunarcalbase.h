@@ -2,6 +2,7 @@
 #define MAX_NEWMOONS 15
 #define MAX_DAYS 450
 #define CACHESIZE 3
+#define BUFSIZE 32
 #define TZ_CN 8
 
 struct solarterm {
@@ -33,7 +34,9 @@ double normjd(double jd, double tz);
 
 int find_leap(void);
 
-int mark_month_day(struct lunarcal *lcs[], int len);
+void update_solarterms_newmoons(int year);
+
+int gen_lunar_calendar(struct lunarcal *lcs[], int len, int year);
 
 void ganzhi(char *buf, size_t buflen, int lyear);
 
@@ -46,3 +49,5 @@ void print_lunarcal(struct lunarcal *p[], int len);
 int get_cache_index(int year);
 
 void init_cache(void);
+
+void add_cache(struct lunarcal *lcs[], int len, int year);
