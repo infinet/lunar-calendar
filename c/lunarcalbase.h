@@ -17,6 +17,7 @@ struct lunarcal {
     int month;        /* month in Lunar Calendar */
     int day;          /* day in Lunar Calendar */
     int holiday;      /* index of CN_HOLIDAY, -1 if not a traditional Holiday */
+    int is_lm;        /* leapmonth? */
 };
 
 struct lunarcal_cache {  /* the item in cache */
@@ -44,10 +45,10 @@ void mark_holiday(struct lunarcal *lcs[], int len);
 
 struct lunarcal *lcalloc(double jd);
 
-void print_lunarcal(struct lunarcal *p[], int len);
+void print_lunarcal(struct lunarcal *lcs[], int len);
 
 int get_cache_index(int year);
 
 void init_cache(void);
 
-void add_cache(struct lunarcal *lcs[], int len, int year);
+void add_cache(struct lunarcal *lcs[], int len);
