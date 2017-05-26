@@ -33,6 +33,7 @@ RE_CAL = re.compile(u'(\d{4})年(\d{1,2})月(\d{1,2})日')
 PROXY = None
 URL = 'http://data.weather.gov.hk/gts/time/calendar/text/T%dc.txt'
 OUTPUT = os.path.join(APPDIR, 'chinese_lunar_%s_%s.ics')
+OUTPUT_JIEQI = os.path.join(APPDIR, 'jieqi_tch_%s_%s.ics')
 
 ICAL_HEAD = ('BEGIN:VCALENDAR\n'
              'PRODID:-//Chen Wei//Chinese Lunar Calendar//EN\n'
@@ -246,6 +247,56 @@ def gen_cal(start, end, fp):
     print 'iCal lunar calendar from %s to %s saved to %s' % (start, end, fp)
 
 
+def gen_cal_jieqi_only(start, end, fp):
+    ''' generate Jieqi and Traditional Chinese in iCalendar format.
+    Args:
+        start and end date in ISO format, like 2010-12-31
+        fp: path to output file
+    Return:
+        none
+        '''
+    startyear = int(start[:4])
+    endyear = int(end[:4])
+    if startyear > 1900 and endyear < 2101:
+        # use Lunar Calendar from HKO
+        print 'use Lunar Calendar from HKO'
+        sql = ('select date, lunardate, holiday, jieqi from ical '
+               'where date>=? and date<=? order by date')
+        rows = query_db(sql, (start, end))
+    else:
+        # compute Lunar Calendar by astronomical algorithm
+        print 'compute Lunar Calendar by astronomical algorithm '
+        rows = []
+        for year in xrange(startyear, endyear + 1):
+            row = cn_lunarcal(year)
+            rows.extend(row)
+
+    lines = [ICAL_HEAD]
+    oneday = timedelta(days=1)
+    for r in rows:
+        dt = datetime.strptime(r['date'], '%Y-%m-%d')
+
+        if not r['holiday'] and not r['jieqi']:
+            continue
+
+        ld = []
+        if r['holiday']:
+            ld.append(r['holiday'])
+        if r['jieqi']:
+            ld.append(r['jieqi'])
+        uid = '%s-lc@infinet.github.io' % r['date']
+        summary = ' '.join(ld)
+        utcstamp = datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')
+        line = ICAL_SEC % (utcstamp, uid, dt.strftime('%Y%m%d'),
+                       (dt + oneday).strftime('%Y%m%d'), summary)
+        lines.append(line.encode('utf8'))
+    lines.append(ICAL_END)
+    outputf = open(fp, 'w')
+    outputf.write('\n'.join(lines))
+    outputf.close()
+    print 'iCal Jieqi/Traditional Chinese holiday calendar from %s to %s saved to %s' % (start, end, fp)
+
+
 def post_process():
     ''' there are several mistakes in HK OBS data, the following date
     do not have a valid lunar date, instead are the weekday names, they
@@ -351,25 +402,30 @@ def main():
     start = '%d-01-01' % (cy - 1)
     end = '%d-12-31' % (cy + 1)
 
-    helpmsg = ('Usage: lunar_ical.py --start=startdate --end=enddate\n'
+    helpmsg = ('Usage: lunar_ical.py --start=startdate --end=enddate --jieqi\n'
 'Example: \n'
 '\tlunar_ical.py --start=2013-10-31 --end=2015-12-31\n'
+'Or to generate Jieqi only:\n'
+'\tlunar_ical.py --start=2013-10-31 --end=2015-12-31 --jieqi\n'
 'Or,\n'
 '\tlunar_ical.py without option will generate the calendar from previous year '
 'to the end of the next year')
 
     try:
         opts, args = getopt.getopt(sys.argv[1:], 'h',
-                                   ['start=', 'end=', 'help'])
+                                   ['start=', 'end=', 'help', 'jieqi'])
     except getopt.GetoptError as err:
         print str(err)
         print helpmsg
         sys.exit(2)
+    jieqionly = False
     for o, v in opts:
         if o == '--start':
             start = v
         elif o == '--end':
             end = v
+        elif o == '--jieqi':
+            jieqionly = True
         elif 'h' in o:
             sys.exit(helpmsg)
 
@@ -383,7 +439,20 @@ def main():
     else:
         fp = OUTPUT % (start, end)
 
-    gen_cal(start, end, fp)
+    if jieqionly:
+        if len(sys.argv) == 1:
+            fp = OUTPUT_JIEQI % ('prev_year', 'next_year')
+        else:
+            fp = OUTPUT_JIEQI % (start, end)
+
+        gen_cal_jieqi_only(start, end, fp)
+    else:
+        if len(sys.argv) == 1:
+            fp = OUTPUT % ('prev_year', 'next_year')
+        else:
+            fp = OUTPUT % (start, end)
+
+        gen_cal(start, end, fp)
 
 
 def verify_lunarcalendar():
@@ -418,4 +487,3 @@ def verify_lunarcalendar():
 if __name__ == "__main__":
     main()
     #verify_lunarcalendar()
-
