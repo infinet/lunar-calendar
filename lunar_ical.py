@@ -31,7 +31,7 @@ DB_FILE = os.path.join(APPDIR, 'db', 'lunarcal.sqlite')
 RE_CAL = re.compile(u'(\d{4})年(\d{1,2})月(\d{1,2})日')
 #PROXY = {'http': 'http://localhost:8001'}
 PROXY = None
-URL = 'http://data.weather.gov.hk/gts/time/calendar/text/T%dc.txt'
+URL = 'https://www.hko.gov.hk/tc/gts/time/calendar/text/files/T%dc.txt'
 OUTPUT = os.path.join(APPDIR, 'chinese_lunar_%s_%s.ics')
 OUTPUT_JIEQI = os.path.join(APPDIR, 'jieqi_tch_%s_%s.ics')
 
