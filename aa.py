@@ -17,7 +17,7 @@ Reference:
 '''
 
 __license__ = 'BSD'
-__copyright__ = '2014, Chen Wei <weichen302@gmail.com>'
+__copyright__ = '2020, Chen Wei <weichen302@gmail.com>'
 __version__ = '0.0.3'
 
 from numpy import *

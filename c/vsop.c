@@ -1,5 +1,5 @@
 /*
- copyright 2014, Chen Wei <weichen302@gmail.com>
+ copyright 2020, Chen Wei <weichen302@gmail.com>
  version 0.0.3
 Implement astronomical algorithms for finding solar terms and moon phases.
 

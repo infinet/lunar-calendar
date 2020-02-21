@@ -9,7 +9,7 @@ lunar calendar data from their website.
 '''
 
 __license__ = 'BSD'
-__copyright__ = '2014, Chen Wei <weichen302@gmail.com>'
+__copyright__ = '2020, Chen Wei <weichen302@gmail.com>'
 __version__ = '0.0.3'
 
 from StringIO import StringIO
