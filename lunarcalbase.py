@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 ''' generate Chinese Lunar Calendar by astronomical algorithms. Also mark the
@@ -17,42 +17,42 @@ __all__ = ['cn_lunarcal']
 
 LCSTARTMONTH = 11
 
-CN_DAY = {2: u'初二',  3: u'初三',  4: u'初四',  5: u'初五',  6: u'初六',
-          7: u'初七',  8: u'初八',  9: u'初九', 10: u'初十', 11: u'十一',
-         12: u'十二', 13: u'十三', 14: u'十四', 15: u'十五', 16: u'十六',
-         17: u'十七', 18: u'十八', 19: u'十九', 20: u'二十', 21: u'廿一',
-         22: u'廿二', 23: u'廿三', 24: u'廿四', 25: u'廿五', 26: u'廿六',
-         27: u'廿七', 28: u'廿八', 29: u'廿九', 30: u'三十'}
+CN_DAY = {2: '初二',  3: '初三',  4: '初四',  5: '初五',  6: '初六',
+          7: '初七',  8: '初八',  9: '初九', 10: '初十', 11: '十一',
+         12: '十二', 13: '十三', 14: '十四', 15: '十五', 16: '十六',
+         17: '十七', 18: '十八', 19: '十九', 20: '二十', 21: '廿一',
+         22: '廿二', 23: '廿三', 24: '廿四', 25: '廿五', 26: '廿六',
+         27: '廿七', 28: '廿八', 29: '廿九', 30: '三十'}
 
-CN_MON = {1: u'正月',  2: u'二月',  3: u'三月',    4: u'四月',
-          5: u'五月',  6: u'六月',  7: u'七月',    8: u'八月',
-          9: u'九月', 10: u'十月', 11: u'十一月', 12: u'十二月',
+CN_MON = {1: '正月',  2: '二月',  3: '三月',    4: '四月',
+          5: '五月',  6: '六月',  7: '七月',    8: '八月',
+          9: '九月', 10: '十月', 11: '十一月', 12: '十二月',
 
-         99: u'閏十一月', 100: u'閏十二月', 101: u'閏正月',
-        102: u'閏二月',   103: u'閏三月',   104: u'閏四月',
-        105: u'閏五月',   106: u'閏六月',   107: u'閏七月',
-        108: u'閏八月',   109: u'閏九月',   110: u'閏十月',
-        111: u'閏十一月', 112: u'閏十二月'}
+         99: '閏十一月', 100: '閏十二月', 101: '閏正月',
+        102: '閏二月',   103: '閏三月',   104: '閏四月',
+        105: '閏五月',   106: '閏六月',   107: '閏七月',
+        108: '閏八月',   109: '閏九月',   110: '閏十月',
+        111: '閏十一月', 112: '閏十二月'}
 
-CN_SOLARTERM = {-120: u'小雪',-105: u'大雪',
-                 -90: u'冬至', -75: u'小寒', -60: u'大寒',
-                 -45: u'立春', -30: u'雨水', -15: u'惊蛰',
-                   0: u'春分',  15: u'清明',  30: u'谷雨',
-                  45: u'立夏',  60: u'小满',  75: u'芒种',
-                  90: u'夏至', 105: u'小暑', 120: u'大暑',
-                 135: u'立秋', 150: u'处暑', 165: u'白露',
-                 180: u'秋分', 195: u'寒露', 210: u'霜降',
-                 225: u'立冬', 240: u'小雪', 255: u'大雪', 270: u'冬至'}
+CN_SOLARTERM = {-120: '小雪',-105: '大雪',
+                 -90: '冬至', -75: '小寒', -60: '大寒',
+                 -45: '立春', -30: '雨水', -15: '惊蛰',
+                   0: '春分',  15: '清明',  30: '谷雨',
+                  45: '立夏',  60: '小满',  75: '芒种',
+                  90: '夏至', 105: '小暑', 120: '大暑',
+                 135: '立秋', 150: '处暑', 165: '白露',
+                 180: '秋分', 195: '寒露', 210: '霜降',
+                 225: '立冬', 240: '小雪', 255: '大雪', 270: '冬至'}
 
-CN_SOLARTERM = {-120: u'小雪',-105: u'大雪',
-                 -90: u'冬至', -75: u'小寒', -60: u'大寒',
-                 -45: u'立春', -30: u'雨水', -15: u'驚蟄',
-                   0: u'春分',  15: u'清明',  30: u'穀雨',
-                  45: u'立夏',  60: u'小滿',  75: u'芒種',
-                  90: u'夏至', 105: u'小暑', 120: u'大暑',
-                 135: u'立秋', 150: u'處暑', 165: u'白露',
-                 180: u'秋分', 195: u'寒露', 210: u'霜降',
-                 225: u'立冬', 240: u'小雪', 255: u'大雪', 270: u'冬至'}
+CN_SOLARTERM = {-120: '小雪',-105: '大雪',
+                 -90: '冬至', -75: '小寒', -60: '大寒',
+                 -45: '立春', -30: '雨水', -15: '驚蟄',
+                   0: '春分',  15: '清明',  30: '穀雨',
+                  45: '立夏',  60: '小滿',  75: '芒種',
+                  90: '夏至', 105: '小暑', 120: '大暑',
+                 135: '立秋', 150: '處暑', 165: '白露',
+                 180: '秋分', 195: '寒露', 210: '霜降',
+                 225: '立冬', 240: '小雪', 255: '大雪', 270: '冬至'}
 
 
 # calendar for this and next year are combined to generate the final output
@@ -90,9 +90,9 @@ def find_astro(year):
     aadays.sort()
 
     # normalize all Julian Day to midnight for later compare
-    aadays = [(jdptime(jdftime(d[0], '%y-%m-%d', tz=8, ut=True), '%y-%m-%d'),
+    tmp = [(jdptime(jdftime(d[0], '%y-%m-%d', tz=8, ut=True), '%y-%m-%d'),
                d[1]) for d in aadays]
-    astro = [{'date': d[0], 'astro': d[1], 'month': None} for d in aadays]
+    astro = [{'date': d[0], 'astro': d[1], 'month': None} for d in tmp]
     return astro
 
 
@@ -118,7 +118,7 @@ def mark_lunarcal_month(clc):
     # mark month name, 11 is the month contains Winter Solstice
     newmoondate = [d['date'] for d in clc if d['astro'] == 'newmoon']
     mname = 11
-    for i in xrange(len(newmoondate) - 1):
+    for i in range(len(newmoondate) - 1):
         thisnm, nextnm = newmoondate[i], newmoondate[i + 1]
         if thisnm < lcstart:
             continue
@@ -155,7 +155,7 @@ def scan_leap(clc):
     # leap year has more than 12 newmoons between two Winter Solstice
     if nmcount > 12:
         # search leap month from LC 11, to next LC 11, which = 11 + 13
-        for m in xrange(11, 25):
+        for m in range(11, 25):
             foundleap = True
             for d in clc:
                 if d['astro'] == 'newmoon':
@@ -229,30 +229,30 @@ def mark_holiday(clcdays):
 
     '''
 
-    for i in xrange(len(clcdays)):
+    for i in range(len(clcdays)):
         m, d = clcdays[i]['month'], clcdays[i]['day']
         if m == 12 and d == 8:
-            clcdays[i]['holiday'] = u'腊八'
+            clcdays[i]['holiday'] = '腊八'
         elif m == 1 and d == 1:
-            clcdays[i]['holiday'] = u'春节'
-            clcdays[i - 1]['holiday'] = u'除夕'
+            clcdays[i]['holiday'] = '春节'
+            clcdays[i - 1]['holiday'] = '除夕'
         elif m == 1 and d == 15:
-            clcdays[i]['holiday'] = u'元宵'
+            clcdays[i]['holiday'] = '元宵'
         elif m == 5 and d == 5:
-            clcdays[i]['holiday'] = u'端午'
+            clcdays[i]['holiday'] = '端午'
         elif m == 7 and d == 7:
-            clcdays[i]['holiday'] = u'七夕'
+            clcdays[i]['holiday'] = '七夕'
         elif m == 7 and d == 15:
-            clcdays[i]['holiday'] = u'中元'
+            clcdays[i]['holiday'] = '中元'
         elif m == 8 and d == 15:
-            clcdays[i]['holiday'] = u'中秋'
+            clcdays[i]['holiday'] = '中秋'
         elif m == 9 and d == 9:
-            clcdays[i]['holiday'] = u'重阳'
+            clcdays[i]['holiday'] = '重阳'
         elif m == 10 and d == 15:
-            clcdays[i]['holiday'] = u'下元'
+            clcdays[i]['holiday'] = '下元'
 
-        if clcdays[i]['jieqi'] == u'清明':
-            clcdays[i - 1]['holiday'] = u'寒食'
+        if clcdays[i]['jieqi'] == '清明':
+            clcdays[i - 1]['holiday'] = '寒食'
 
     return clcdays
 
@@ -302,13 +302,13 @@ def cn_lunarcal(year):
 
     cal0 = search_lunarcal(year)
     cal1 = search_lunarcal(year + 1)
-    for k, v in cal1.iteritems():
+    for k, v in cal1.items():
         cal0[k] = v
 
     start = jdptime('%s-%s-%s' % (year, 1, 1), '%y-%m-%d')
     end = jdptime('%s-%s-%s' % (year, 12, 31), '%y-%m-%d')
     lc = []
-    for jd, day in cal0.iteritems():
+    for jd, day in cal0.items():
         day['date'] = jdftime(jd, '%y-%m-%d', ut=False)
         if jd >= start and jd <= end:
             lc.append((jd, day))
@@ -322,7 +322,7 @@ def cn_lunarcal(year):
 def main():
     a = cn_lunarcal(2033)
     for x in a:
-        print x['date'], x['lunardate'], x['jieqi'], x['holiday']
+        print(x['date'], x['lunardate'], x['jieqi'], x['holiday'])
 
 
 if __name__ == "__main__":

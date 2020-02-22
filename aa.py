@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 ''' Implement astronomical algorithms for finding solar terms and moon phases.
@@ -20,9 +20,11 @@ __license__ = 'BSD'
 __copyright__ = '2020, Chen Wei <weichen302@gmail.com>'
 __version__ = '0.0.3'
 
-from numpy import *
-import numexpr as ne
+import math
+from math import sin,cos,pi
 import re
+import numpy as np
+import numexpr as ne
 
 J2000 = 2451545.0
 SYNODIC_MONTH = 29.53
@@ -40,7 +42,7 @@ TWOPI = 2 * pi
 #
 # Luni-Solar argument multipliers,  coefficients, unit 1e-7 arcsec
 # L  L'  F  D  Om longitude (sin, t*sin, cos), obliquity (cos, t*cos, sin)
-IAU2000BNutationTable = array([
+IAU2000BNutationTbl = np.array([
     [  0,  0,  0,  0, 1, -172064161, -174666,  33386, 92052331,  9086, 15377 ],
     [  0,  0,  2, -2, 2,  -13170906,   -1675, -13696,  5730336, -3015, -4587 ],
     [  0,  0,  2,  0, 2,   -2276413,    -234,   2796,   978459,  -485,  1374 ],
@@ -121,7 +123,7 @@ IAU2000BNutationTable = array([
 ])
 
 # Truncated VSOP87D tables
-earth_L0 = array([
+earth_L0 = np.array([
     [ 1.75347045673, 0, 0 ],
     [ 0.03341656456, 4.66925680417, 6283.0758499914 ],
     [ 0.00034894275, 4.62610241759, 12566.1516999828 ],
@@ -297,7 +299,7 @@ earth_L0 = array([
     # 172 terms retained
 ])
 
-earth_L1 = array([
+earth_L1 = np.array([
     [ 6283.31966747491, 0, 0 ],
     [ 0.00206058863, 2.67823455584, 6283.0758499914 ],
     [ 0.0000430343, 2.63512650414, 12566.1516999828 ],
@@ -466,7 +468,7 @@ earth_L1 = array([
     # 165 terms retained
 ])
 
-earth_L2 = array([
+earth_L2 = np.array([
     [ 0.0005291887, 0, 0 ],
     [ 0.00008719837, 1.07209665242, 6283.0758499914 ],
     [ 0.00000309125, 0.86728818832, 12566.1516999828 ],
@@ -563,7 +565,7 @@ earth_L2 = array([
     # 93 terms retained
 ])
 
-earth_L3 = array([
+earth_L3 = np.array([
     [ 0.00000289226, 5.84384198723, 6283.0758499914 ],
     [ 0.00000034955, 0, 0 ],
     [ 0.00000016819, 5.48766912348, 12566.1516999828 ],
@@ -575,7 +577,7 @@ earth_L3 = array([
     # 8 terms retained
 ])
 
-earth_L4 = array([
+earth_L4 = np.array([
     [ 0.00000114084, 3.14159265359, 0 ],
     [ 0.00000007717, 4.13446589358, 6283.0758499914 ],
     [ 0.00000000765, 3.83803776214, 12566.1516999828 ],
@@ -583,7 +585,7 @@ earth_L4 = array([
     # 4 terms retained
 ])
 
-earth_L5 = array([
+earth_L5 = np.array([
     [ 0.00000000878, 3.14159265359, 0 ],
     [ 0.00000000172, 2.7657906951, 6283.0758499914 ],
     [ 0.0000000005, 2.01353298182, 155.4203994342 ],
@@ -591,7 +593,7 @@ earth_L5 = array([
     # 4 terms retained
 ])
 
-earth_B0 = array([
+earth_B0 = np.array([
     [ 0.0000027962, 3.19870156017, 84334.66158130829 ],
     [ 0.00000101643, 5.42248619256, 5507.5532386674 ],
     [ 0.00000080445, 3.88013204458, 5223.6939198022 ],
@@ -615,7 +617,7 @@ earth_B0 = array([
     # 20 terms retained
 ])
 
-earth_B1 = array([
+earth_B1 = np.array([
     [ 0.0000000903, 3.8972906189, 5507.5532386674 ],
     [ 0.00000006177, 1.73038850355, 5223.6939198022 ],
     [ 0.000000038, 5.24404145734, 2352.8661537718 ],
@@ -631,7 +633,7 @@ earth_B1 = array([
     # 12 terms retained
 ])
 
-earth_B2 = array([
+earth_B2 = np.array([
     [ 0.00000001662, 1.62703209173, 84334.66158130829 ],
     [ 0.00000000492, 2.41382223971, 1047.7473117547 ],
     [ 0.00000000344, 2.24353004539, 5507.5532386674 ],
@@ -639,17 +641,17 @@ earth_B2 = array([
     # 4 terms retained
 ])
 
-earth_B3 = array([
+earth_B3 = np.array([
     [ 0, 0, 0 ],
     # 0 terms retained
 ])
 
-earth_B4 = array([
+earth_B4 = np.array([
     [ 0, 0, 0 ],
     # 0 terms retained
 ])
 
-earth_R0 = array([
+earth_R0 = np.array([
     [ 1.00013988799, 0, 0 ],
     [ 0.01670699626, 3.09846350771, 6283.0758499914 ],
     [ 0.00013956023, 3.0552460962, 12566.1516999828 ],
@@ -725,7 +727,7 @@ earth_R0 = array([
     # 72 terms retained
 ])
 
-earth_R1 = array([
+earth_R1 = np.array([
     [ 0.00103018608, 1.10748969588, 6283.0758499914 ],
     [ 0.00001721238, 1.06442301418, 12566.1516999828 ],
     [ 0.00000702215, 3.14159265359, 0 ],
@@ -739,7 +741,7 @@ earth_R1 = array([
     # 10 terms retained
 ])
 
-earth_R2 = array([
+earth_R2 = np.array([
     [ 0.00004359385, 5.78455133738, 6283.0758499914 ],
     [ 0.00000123633, 5.57934722157, 12566.1516999828 ],
     [ 0.00000012341, 3.14159265359, 0 ],
@@ -749,18 +751,18 @@ earth_R2 = array([
     # 6 terms retained
 ])
 
-earth_R3 = array([
+earth_R3 = np.array([
     [ 0.00000144595, 4.27319435148, 6283.0758499914 ],
     [ 0.00000006729, 3.91697608662, 12566.1516999828 ],
     # 2 terms retained
 ])
 
-earth_R4 = array([
+earth_R4 = np.array([
     [ 0.00000003858, 2.56384387339, 6283.0758499914 ],
     # 1 terms retained
 ])
 
-earth_R5 = array([
+earth_R5 = np.array([
     [ 0, 0, 0 ],
     # 0 terms retained
 ])
@@ -774,7 +776,7 @@ earth_R5 = array([
 # terms of 3rd-degree and 4th-degree are ignored
 # in arcsec
 # average error Moon = 0.73", max 1.5"
-M_ARG = array([
+M_ARG = np.array([
 # 226 terms
     [ 485868.249036, 1717915923.21779990, 31.87920 ],
     [ 1658653.158348, 1488007279.20020032, -44.62040 ],
@@ -1009,7 +1011,7 @@ M_ARG = array([
 # Ak1    mas/yr  Amplitude of the 1st-order Poisson term
 # Ak2    uas/yr2 Amplitude of the 2nd-order Poisson term
 # [ Ak0, Ak1, Ak2 ] ...
-M_AMP = array([
+M_AMP = np.array([
 # 226 terms
     [  22639.5864251,  0.190648,  5.529914 ],
     [   4586.4946082,  0.112352,  1.480719 ],
@@ -1244,7 +1246,7 @@ M_AMP = array([
 # phik1  arcsec     Phase of the 1st-order Poisson term
 # phik2  arcsec     Phase of the 2nd-order Poisson term
 # [ phik0, phik1, phik2 ] ...
-M_PHASE = array([
+M_PHASE = np.array([
 # 226 terms
     [    0.000383901368,  -85.864631587374,  -90.051320519700 ],
     [    0.002465002781,   43.853451435402,  -89.760808801732 ],
@@ -1476,16 +1478,16 @@ M_PHASE = array([
 
 # post process of LEA-406 tables
 # horizontal split the numpy array
-F0_V, F1_V, F2_V = hsplit(M_ARG, 3)
+F0_V, F1_V, F2_V = np.hsplit(M_ARG, 3)
 CV = M_PHASE * DEG2RAD
-C_V, CT_V, CTT_V = hsplit(CV, 3)
-A_V, AT_V, ATT_V = hsplit(M_AMP, 3)
+C_V, CT_V, CTT_V = np.hsplit(CV, 3)
+A_V, AT_V, ATT_V = np.hsplit(M_AMP, 3)
 
 
 def vsopLx(vsopterms, t):
     ''' helper function for calculate VSOP87 '''
 
-    lx = vsopterms[:, 0] * cos(vsopterms[:, 1] + vsopterms[:, 2] * t)
+    lx = vsopterms[:, 0] * np.cos(vsopterms[:, 1] + vsopterms[:, 2] * t)
 
     return sum(lx)
 
@@ -1520,18 +1522,6 @@ def vsop(jde, FK5=True):
     lon = (L0 + t * (L1 + t * (L2 + t * (L3 + t * (L4 + t * L5)))))
 
     if FK5:
-        #b0 = vsopLx(earth_B0, t)
-        #b1 = vsopLx(earth_B1, t)
-        #b2 = vsopLx(earth_B2, t)
-        #b3 = vsopLx(earth_B3, t)
-        #b4 = vsopLx(earth_B4, t)
-        #lat = b0 + t * (b1 + t * (b2 + t * (b3 + t * b4 )))
-        #lp = lon - 1.397 * t - 0.00031 * t * t
-        #deltalon = (-0.09033 + 0.03916 * (cos(lp) + sin(lp))
-        #                             * tan(lat)) * ASEC2RAD
-        #print 'FK5 convertion: %s' % fmtdeg(math.degrees(deltalon))
-        # appears -0.09033 is good enough
-        #deltal = math.radians(-0.09033 / 3600.0)
         deltalon = -4.379321981462438e-07
         lon += deltalon
 
@@ -1555,7 +1545,7 @@ def rootbysecand(f, angle, x0, x1, precision=0.000000001):
 
 def normrad(r):
     ''' covernt radian to 0 - 2pi '''
-    alpha = fmod(r, TWOPI)
+    alpha = math.fmod(r, TWOPI)
     if alpha < 0:
         alpha += TWOPI
     return alpha
@@ -1563,7 +1553,7 @@ def normrad(r):
 
 def npitopi(r):
     ''' convert an angle in radians into (-pi, +pi] '''
-    r = fmod(r, TWOPI)
+    r = math.fmod(r, TWOPI)
     if r > PI:
         r -= TWOPI
     elif r <= -1.0 * PI:
@@ -1582,7 +1572,7 @@ def fmtdeg(fdegree):
     sign =''
     if fdegree < 0:
         sign = '-'
-    res = '''%s%d%s%d'%.6f"''' % (sign, int(deg), u'\N{DEGREE SIGN}',
+    res = '''%s%d%s%d'%.6f"''' % (sign, int(deg), '\N{DEGREE SIGN}',
                             math.floor(minutes), secs)
     return res
 
@@ -1689,8 +1679,8 @@ def findnewmoons(start, count=15):
         b = newmoon(start)
         if b != nm:
             if nm > 0 and abs(nm - b) > (SYNODIC_MONTH + 1):
-                print 'last newmoon %s, found %s' % (fmtjde2ut(nm),
-                                                     fmtjde2ut(b))
+                print('last newmoon %s, found %s' % (fmtjde2ut(nm),
+                                                     fmtjde2ut(b)))
             newmoons.append(b)
             nm = b
             nmcount += 1
@@ -1753,8 +1743,8 @@ def lightabbr_low(jde):
     # Sun's distance from the Earth, in AU
     #R = (1.000001018 * (1 - e * e)) / (1 + e * cos(math.radians(v)))
     # finally, the aberration in radians
-    labbr = (math.radians(20.49552 / 3600.0) * (1 + e * cos(math.radians(v))) /
-                                     -1.000001018)
+    labbr = (math.radians(20.49552 / 3600.0)
+            * (1 + e * math.cos(math.radians(v))) / -1.000001018)
     return labbr
 
 
@@ -1886,7 +1876,7 @@ def jd2g(jd):
 
     jd += 0.5
     z = int(jd)
-    f = fmod(jd, 1.0)  # decimal part
+    f = math.fmod(jd, 1.0)  # decimal part
     if z < 2299161:
         a = z
     else:
@@ -2187,10 +2177,10 @@ def nutation(jde):
     #Mean longitude of the ascending node of the Moon.
     Om = 450160.398036 - t * 6962890.5431
 
-    m1, m2, m3, m4, m5, AA, BB, CC, EE, DD, FF = hsplit(IAU2000BNutationTable,
+    m1, m2, m3, m4, m5, AA, BB, CC, EE, DD, FF = np.hsplit(IAU2000BNutationTbl,
                                                         11)
     args = (m1 * L + m2 * Lp + m3 * F + m4 * D + m5 * Om) * ASEC2RAD
-    lon = sum((AA + BB * t) * sin(args) + CC * cos(args))
+    lon = sum((AA + BB * t) * np.sin(args) + CC * np.cos(args))
 
     # unit of longitude is 1.0e-7 arcsec, convert it to arcsec
     lon *= 1.0e-7
@@ -2201,7 +2191,7 @@ def nutation(jde):
     lon += deplan
 
     lon *= ASEC2RAD  # Convert from arcsec to radians
-    lon = fmod(lon, TWOPI)
+    lon = math.fmod(lon, TWOPI)
 
     return lon
 
@@ -2236,7 +2226,7 @@ def fortran_readline(line, fmt):
     tmp = []
     i = 0
     for rep, ftype, length in fw:
-        for cnt in xrange(rep):
+        for cnt in range(rep):
             field = line[i: i + length]
             i += length
             if ftype == 'F':
@@ -2261,7 +2251,7 @@ def fortran_read(fp, fmt):
         tmp = []
         i = 0
         for rep, ftype, length in fw:
-            for cnt in xrange(rep):
+            for cnt in range(rep):
                 field = line[i: i + length]
                 i += length
                 if ftype == 'F':
@@ -2391,7 +2381,7 @@ class LEA406():
             CTT_V.append(a[20])
 
             # CALCULATING THE ARGUMENTS [RAD]
-            for K in xrange(14):
+            for K in range(14):
                 F0_V[I] += IND[K] * FR[K][0]
                 F1_V[I] += IND[K] * FR[K][1]
                 F2_V[I] += IND[K] * FR[K][2]
@@ -2399,19 +2389,19 @@ class LEA406():
                 F4_V[I] += IND[K] * FR[K][4]
 
         LEN_KEPT = LEN - count
-        print '%d skipped, %d kept' % (count, LEN_KEPT)
-        self.A_V =array(A_V)
-        self.AT_V =array(AT_V)
-        self.ATT_V =array(ATT_V)
-        self.C_V =array(C_V) * DEG2RAD
-        self.CT_V =array(CT_V) * DEG2RAD
-        self.CTT_V =array(CTT_V) * DEG2RAD
+        print('%d skipped, %d kept' % (count, LEN_KEPT))
+        self.A_V =np.array(A_V)
+        self.AT_V =np.array(AT_V)
+        self.ATT_V =np.array(ATT_V)
+        self.C_V =np.array(C_V) * DEG2RAD
+        self.CT_V =np.array(CT_V) * DEG2RAD
+        self.CTT_V =np.array(CTT_V) * DEG2RAD
 
-        self.F0_V = array(F0_V) * 3600
-        self.F1_V = array(F1_V)
-        self.F2_V = array(F2_V)
-        self.F3_V = array(F3_V)
-        self.F4_V = array(F4_V)
+        self.F0_V = np.array(F0_V) * 3600
+        self.F1_V = np.array(F1_V)
+        self.F2_V = np.array(F2_V)
+        self.F3_V = np.array(F3_V)
+        self.F4_V = np.array(F4_V)
         self.I_V = I
 
     def lon(self, jd, ignorenutation=False):
@@ -2480,11 +2470,11 @@ def main():
     #jd = 2444239.5
     jd = g2jd(1900, 1, 1)
     #lea406class = LEA406()
-    for i in xrange(1):
+    for i in range(1):
         #l = normrad(lea406class.lon(jd))
         l = normrad(lea406(jd))
         #d = fmtdeg(math.degrees(npitopi(e -l )))
-        print jd, l, fmtdeg(math.degrees(l))
+        print((jd, l, fmtdeg(math.degrees(l))))
         jd += 2000
     #print fmtdeg(math.degrees(e) % 360.0)
     #angle = -105
@@ -2497,8 +2487,8 @@ def main():
 def test():
     jd = 2411545.0
     year = 2097
-    for year in xrange(2060, 2060):
-        print year, deltaT(year, 9)
+    for year in range(2060, 2060):
+        print(year, deltaT(year, 9))
 
 
 if __name__ == "__main__":

@@ -22,7 +22,7 @@ calendar, thunderbird + lightning插件, iphone/ipad, 安卓都支持。
 
 ### 系统要求
 
- * Python: python 2.7上测试可用
+ * Python: python 3.5上测试可用
 
  * [Numpy][] 和 [Numexpr][]: 纯Python速度较慢，而天文算法特别是完全版的VSOP87和LEA-406计算量尤其大，所以最好配合Numpy以加快计算速度。
 
@@ -120,7 +120,7 @@ of using their conversion table, which is only for Non-Commercial use.
 
 ### Requirement:
 
- * Python: tested on python 2.7
+ * Python: tested on python 3.5
 
  * [Numpy][] and [Numexpr][]: Only needed when generate calendar by astronomical
   algorithm. The full version of LEA-406 and VSOP87 is rather slow when compute

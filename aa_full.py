@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 ''' Implement astronomical algorithms for finding solar terms and moon phases.
@@ -20,7 +20,10 @@ __license__ = 'BSD'
 __copyright__ = '2020, Chen Wei <weichen302@gmail.com>'
 __version__ = '0.0.3'
 
-from numpy import *
+import math
+from math import pi, fmod
+
+import numpy as np
 import numexpr as ne
 from aa import lightabbr_high
 from aa import nutation
@@ -41,7 +44,7 @@ TWOPI = 2 * pi
 def vsopLx(vsopterms, t):
     ''' helper function for calculate VSOP87 '''
 
-    lx = vsopterms[:, 0] * cos(vsopterms[:, 1] + vsopterms[:, 2] * t)
+    lx = vsopterms[:, 0] * np.cos(vsopterms[:, 1] + vsopterms[:, 2] * t)
 
     return sum(lx)
 
@@ -280,10 +283,10 @@ FRM = [785939.924268, 1732564372.3047, -5.279, .006665, -5.522e-5]
 from aa_full_table import M_ARG, M_AMP, M_PHASE
 
 # post import process of LEA-406 tables, horizontal split the numpy array
-F0_V, F1_V, F2_V, F3_V, F4_V = hsplit(M_ARG, 5)
+F0_V, F1_V, F2_V, F3_V, F4_V = np.hsplit(M_ARG, 5)
 CV = M_PHASE * DEG2RAD
-C_V, CT_V, CTT_V = hsplit(CV, 3)
-A_V, AT_V, ATT_V = hsplit(M_AMP, 3)
+C_V, CT_V, CTT_V = np.hsplit(CV, 3)
+A_V, AT_V, ATT_V = np.hsplit(M_AMP, 3)
 
 
 def lea406_full(jd, ignorenutation=False):
@@ -322,10 +325,10 @@ def lea406_full(jd, ignorenutation=False):
 def main():
     #jd = 2444239.5
     jd = g2jd(1900, 1, 1)
-    for i in xrange(10):
+    for i in range(10):
         l = normrad(lea406_full(jd))
         #d = fmtdeg(math.degrees(npitopi(e -l )))
-        print jd, l, fmtdeg(math.degrees(l))
+        print(jd, l, fmtdeg(math.degrees(l)))
         jd += 2000
     #print fmtdeg(math.degrees(e) % 360.0)
     #angle = -105
