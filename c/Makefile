@@ -1,13 +1,13 @@
 
 CC = gcc
-CFLAGS = -Wall -O2
+CFLAGS = -Wall -O3 -g
 LIBS = -lm -lpthread
 
 LUNARCAL = lunarcal
 TESTASTRO = testastro
 
 # default target
-.PHONY : all
+.PHONY : all clean
 all: $(LUNARCAL) $(TESTASTRO)
 	@echo all done!
 
@@ -36,6 +36,5 @@ $(TESTASTRO): $(TESTASTRO_OBJS)
 	$(CC) $(CFLAGS) -o $(TESTASTRO) $(TESTASTRO_OBJS) $(LIBS)
 
 
-.PHONY : clean
 clean:
-	rm -f *.o core a.out astro lunarcal testastro
+	rm -f *.o core a.out lunarcal testastro

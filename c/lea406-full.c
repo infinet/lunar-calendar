@@ -118,6 +118,10 @@ double lea406(double jd, int ignorenutation) {
         V += nutation(jd);
         /* printf("debug lea406,  nutation been adjusted"); */
     }
+
+    for (i = 0; i < num_threads; i++)
+        free(thread_args[i]);
+
     return V;
 }
 

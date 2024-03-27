@@ -4,7 +4,7 @@
 #include <math.h>
 #include "astro.h"
 
-#define MAX_JPL_LINE_LEN 100
+#define MAX_JPL_LINE_LEN 128
 #define MAX_JPL_RECORDS  73415
 #define FLAG_SOE 1
 
@@ -14,10 +14,15 @@ struct jplrcd {
 };
 
 int parsejplhorizon(char *fname, struct jplrcd *records[]);
+void testnewmoon_solarterm(int year);
+void testdeltat(void);
+
 struct jplrcd *lon_alloc(void);
 void verify_apparent_sun_moon(void);
 double n180to180(double angle);
 double jd2year(double jd);
+void testapparentmoon(void);
+void testnutation(void);
 
 double jd2year(double jd)
 {
@@ -30,11 +35,9 @@ double jd2year(double jd)
     return fyear;
 }
 
-void testdeltat(void);
 void testdeltat()
 {
 //    double d = -133.5;
-//    int i;
     double jd;
     char strout[30];
     jd = jdptime("2012-01-05 18:00", "%y-%m-%d %H:%M", 0, 0);
@@ -43,10 +46,10 @@ void testdeltat()
     jdftime(strout, jd, "%y-%m-%d %H:%M", 0, 0);
     printf("jdftime output = %s\n", strout);
 
-    int i,year;
+    int year;
     double deltat;
     year = -500;
-    for (i = 0; i < 20; i++) {
+    for (int i = 0; i < 20; i++) {
         deltat = deltaT(year, 1);
         printf("%d   = %.2f\n", year, deltat);
         year += 100;
@@ -54,46 +57,42 @@ void testdeltat()
     return;
 }
 
-void testnewmoon_solarterm(void);
-void testnewmoon_solarterm(void)
+void testnewmoon_solarterm(int year)
 {
     double newmoons[NMCOUNT];
     double jd;
     //jd = jdptime("2014-01-01 18:00", "%y-%m-%d %H:%M", 0, 0);
-    int year = 2000;
-    int n;
+    int y = year;
     char isodt[30];
-    int i;
-    for (n = 0; n < 50; n++) {
-        jd = g2jd(year, 1, 1.0);
+    const float tz = 8.0;
+    for (int n = 0; n < 2; n++) {
+        jd = g2jd(y, 1, 1.0);
         findnewmoons(newmoons, NMCOUNT, jd);
-        year += 1;
+        y += 1;
 
-        for (i = 0; i < NMCOUNT; i++) {
-            jdftime(isodt, newmoons[i], "%y-%m-%d %H:%M:%S", 8.0, 1);
-            printf("found newmoon: %s %.8f\n", isodt, newmoons[i]);
+        for (int i = 0; i < NMCOUNT; i++) {
+            jdftime(isodt, newmoons[i], "%y-%m-%d %H:%M:%S", tz, 1);
+            printf("newmoon: %s UTC%.1f\n", isodt, tz);
         }
-
     }
 
     double angle;
+    y = year;
     for (angle = -90; angle < 285; angle += 15) {
-        jd = solarterm(2014, angle);
-        jdftime(isodt, jd, "%y-%m-%d %H:%M:%S", 8.0, 1);
-        printf("solar term: %3.0f %s\n", angle, isodt);
+        jd = solarterm(y, angle);
+        jdftime(isodt, jd, "%y-%m-%d %H:%M:%S", tz, 1);
+        printf("solar term: %3.0f %s UTC%.1f\n", angle, isodt, tz);
     }
     return;
 }
 
-void testapparentmoon(void);
 void testapparentmoon(void)
 {
     double jd = 2411545.0;
     char deg[30];
     char degsun[30];
     double d;
-    int i;
-    for (i = 0; i < 20; i++) {
+    for (int i = 0; i < 20; i++) {
         d = apparentmoon(jd, 1) * RAD2DEG;
         fmtdeg(deg, d);
         d = lightabbr_high(jd) * RAD2DEG;
@@ -104,7 +103,6 @@ void testapparentmoon(void)
     }
 }
 
-void testnutation(void);
 void testnutation(void)
 {
     double jd = 2411545.0;
@@ -130,9 +128,9 @@ int parsejplhorizon(char *fname, struct jplrcd *records[])
     }
     flag = 0;
     i = 0;
-    while ((p = fgets(buf, MAX_JPL_LINE_LEN + 1, fp)) != NULL
-                                                 && i < MAX_JPL_RECORDS) {
-        if (p == strstr(p, "$$SOE")) {  /* start of records */
+    while ((p = fgets(buf, MAX_JPL_LINE_LEN, fp)) != NULL &&
+           i < MAX_JPL_RECORDS) {
+        if (p == strstr(p, "$$SOE")) { /* start of records */
             flag = 1;
             continue;
         } else if (p == strstr(p, "$$EOE")) {
@@ -144,11 +142,9 @@ int parsejplhorizon(char *fname, struct jplrcd *records[])
             sscanf(p, "%lf %lf", &(plon->jd), &(plon->lon));
             records[i++] = plon;
         }
-
     }
     return i;
 }
-
 
 struct jplrcd *lon_alloc(void)
 {
@@ -217,12 +213,11 @@ double n180to180(double angle)
     return angle;
 }
 
-int main(void);
 int main()
 {
-    //testnewmoon_solarterm();
+    testnewmoon_solarterm(2024);
     //testapparentmoon();
     //testnutation();
-    verify_apparent_sun_moon();
+    //verify_apparent_sun_moon();
     return 0;
 }

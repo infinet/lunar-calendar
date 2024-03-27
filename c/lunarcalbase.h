@@ -2,7 +2,7 @@
 #define MAX_NEWMOONS 15
 #define MAX_DAYS 450
 #define CACHESIZE 3
-#define BUFSIZE 32
+#define BUFSIZE 64
 #define TZ_CN 8
 
 struct solarterm {
