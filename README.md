@@ -159,7 +159,7 @@ Calendar in ical format to the terminal. Use `>` to redirect the output to a fil
 [Contact me](mailto: weichen302@gmail.com)
 
 [iCal]: https://raw.github.com/infinet/lunar-calendar/master/chinese_lunar_prev_year_next_year.ics
-[HK_Obs]: http://data.weather.gov.hk/gts/time/conversion1_text_c.htm
+[HK_Obs]: https://www.hko.gov.hk/tc/gts/time/conversion1_text.htm
 [Screenshot]: http://infinet.github.io/images/lunar_calendar.jpg
 [aa_full]: http://infinet.github.io/images/moon-sun-full_lea406_vsop87_compare_JPL.png
 [aa_trunc]: http://infinet.github.io/images/moon-sun-trunc_lea406_vsop87_compare_JPL.png
