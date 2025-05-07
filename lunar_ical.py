@@ -44,6 +44,7 @@ ICAL_HEAD = ('BEGIN:VCALENDAR\n'
              'X-WR-CALDESC:中国农历1901-2100, 包括节气. 数据来自香港天文台')
 
 ICAL_SEC = ('BEGIN:VEVENT\n'
+            'X-MICROSOFT-CDO-BUSYSTATUS:FREE\n'
             'DTSTAMP:%s\n'
             'UID:%s\n'
             'DTSTART;VALUE=DATE:%s\n'
