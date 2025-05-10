@@ -125,7 +125,7 @@ def parse_hko(pageurl):
     print('grabbing and parsing %s' % pageurl)
     with urllib.request.urlopen(pageurl) as f:
         html = f.read()
-        lines = html.decode('big5').split('\n')
+        lines = html.decode('utf-8').split('\n')
 
     sql_nojq = ('insert or replace into ical (date,lunardate) '
                 'values(?,?) ')
