@@ -38,6 +38,10 @@ calendar, thunderbird + lightning插件, iphone/ipad, 安卓都支持。
 
     ./lunar_ical.py --start=2010-05-01 --end=2021-12-31
 
+使用参数--yuefen在每天的农历日期中加上月份名称, 例如:
+
+    ./lunar_ical.py --start=2010-05-01 --end=2021-12-31 --yuefen
+
 超出1901-2100的农历数据使用VSOP87行星理论和LEA-406月球理论生成. 以香港天文台的
 数据(更新于2014年)为标准，用此法生成的1949到2100年间农历有两处不一致：
 
@@ -141,6 +145,12 @@ Start and end date can also be specified as command line options, for example:
     ./lunar_ical.py --start=1990-01-01 --end=2001-01-01
 
 The date must in ISO format.
+
+You can also use `--yuefen` option to add month name to the lunar date in all events, for
+example:
+
+    ./lunar_ical.py --start=1990-01-01 --end=2001-01-01 --yuefen
+
 
 
 ### C port

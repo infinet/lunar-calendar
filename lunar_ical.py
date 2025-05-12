@@ -161,10 +161,11 @@ def update_cal():
         parse_hko(URL % y)
 
 
-def gen_cal(start, end, fp):
+def gen_cal(start, end, fp,verboseyuefen=False):
     ''' generate lunar calendar in iCalendar format.
     Args:
         start and end date in ISO format, like 2010-12-31
+        verboseyuefen: if True, show month in every event entry
         fp: path to output file
     Return:
         none
@@ -193,7 +194,7 @@ def gen_cal(start, end, fp):
         if r['lunardate'] in list(CN_MON.keys()):
             ld = ['%s%s' % (lunaryear(r['date']), r['lunardate'])]
         else:
-            ld = [r['lunardate']]
+            ld = ['%s%s' % (lunarmonth(r['date']), r['lunardate'])] if verboseyuefen else [r['lunardate']]
         if r['holiday']:
             ld.append(r['holiday'])
         if r['jieqi']:
@@ -360,28 +361,42 @@ def lunaryear(isodate):
     return res
 
 
+def lunarmonth(isodate):
+    '''find lunar month for a date'''
+    sql = ('select lunardate from ical where lunardate like "_月" and '
+           'date<=? order by date desc limit 1')
+    row = query_db(sql, (isodate,), one=True)
+    res = 'Unknown'
+    if row:
+        res = row[0]
+    return res
+
+
 def main():
     cy = datetime.today().year
     start = '%d-01-01' % (cy - 1)
     end = '%d-12-31' % (cy + 1)
 
-    helpmsg = ('Usage: lunar_ical.py --start=startdate --end=enddate --jieqi\n'
+    helpmsg = ('Usage: lunar_ical.py --start=startdate --end=enddate --jieqi --yuefen\n'
 'Example: \n'
 '\tlunar_ical.py --start=2013-10-31 --end=2015-12-31\n'
 'Or to generate Jieqi only:\n'
 '\tlunar_ical.py --start=2013-10-31 --end=2015-12-31 --jieqi\n'
+'add -yuefen option to show month in every event entry:\n'
+'\tlunar_ical.py --start=2013-10-31 --end=2015-12-31 --yuefen\n'
 'Or,\n'
 '\tlunar_ical.py without option will generate the calendar from previous year '
 'to the end of the next year')
 
     try:
         opts, args = getopt.getopt(sys.argv[1:], 'h',
-                                   ['start=', 'end=', 'help', 'jieqi'])
+                                   ['start=', 'end=', 'help', 'jieqi', 'yuefen'])
     except getopt.GetoptError as err:
         print(str(err))
         print(helpmsg)
         sys.exit(2)
     jieqionly = False
+    verboseyuefen = False
     for o, v in opts:
         if o == '--start':
             start = v
@@ -389,6 +404,8 @@ def main():
             end = v
         elif o == '--jieqi':
             jieqionly = True
+        elif o == '--yuefen':
+            verboseyuefen = True
         elif 'h' in o:
             sys.exit(helpmsg)
 
@@ -415,7 +432,7 @@ def main():
         else:
             fp = OUTPUT % (start, end)
 
-        gen_cal(start, end, fp)
+        gen_cal(start, end, fp, verboseyuefen)
 
 
 def verify_lunarcalendar():
