@@ -363,7 +363,7 @@ def lunaryear(isodate):
 
 def lunarmonth(isodate):
     '''find lunar month for a date'''
-    sql = ('select lunardate from ical where lunardate like "_月" and '
+    sql = ('select lunardate from ical where lunardate like "%月" and '
            'date<=? order by date desc limit 1')
     row = query_db(sql, (isodate,), one=True)
     res = 'Unknown'
