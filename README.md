@@ -1,4 +1,4 @@
-## iCalendar格式的农历 节气 及传统节日
+## iCalendar格式的农历 节气 及传统节日 自定义日期
 
 iCalendar是一种通用的日历交换格式，很多软件和设备，比如google calendar, apple
 calendar, thunderbird + lightning插件, iphone/ipad, 安卓都支持。
@@ -52,6 +52,19 @@ calendar, thunderbird + lightning插件, iphone/ipad, 安卓都支持。
 不一致的原因在于上面两处节气及新月正好跨越午夜时分，差距数秒就能影响该节气或新月的
 发生日期。由于使用不同的行星位置计算方法和Delta T估算方法，出现这种差异在所难免。
 
+### 生成指定日期的农历日程
+如果只需要某些特定日期的农历日程，如生日、纪念日、赶集日等，可以使用`lunar_custom_day_ical.py`脚本。
+
+它会生成一个ics文件，包含你指定的日期和农历日期。使用方法如下：
+
+    ./lunar_custom_day_ical.py --start=2010-05-01 --end=2021-12-31 --dates=./custom_dates_example.csv
+
+其中`custom_dates_example.csv`文件的格式如下：
+```csv
+正月初一,杜甫生日
+二月初五,李清照生日
+十二月十九,苏轼生日
+```
 
 ### C 版本
 
@@ -152,6 +165,22 @@ example:
     ./lunar_ical.py --start=1990-01-01 --end=2001-01-01 --yuefen
 
 
+### Lunar Event for specific date
+If you only need a few specific dates, like birthday, anniversary, or ganji day,
+you can use `lunar_custom_day_ical.py` script to generate a ics file which
+contains the lunar date and the event name. The script will generate a ics file
+for the specified date range, and add the events to the ics file.
+The usage is as follows:
+
+    ./lunar_custom_day_ical.py --start=2010-05-01 --end=2021-12-31 --dates=./custom_dates_example.csv
+
+The `custom_dates_example.csv` file should be in the following format:
+
+```csv
+正月初一,杜甫生日
+二月初五,李清照生日
+十二月十九,苏轼生日
+```
 
 ### C port
 
