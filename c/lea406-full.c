@@ -24,10 +24,17 @@ static int num_threads = 0;  /* number of threads for compute lea406-full */
 static int nelems_per_thread;   /* number of elements assigned to a thread */
 
 /* count logical CPU by parsing /proc/cpuinfo */
+/* or by hw.ncpu on macos */
 int cpucount(void)
 {
-    FILE *fp;
     int logic_cpu;
+#ifdef __APPLE__
+    FILE* fp = popen("sysctl -n hw.ncpu", "r");
+    assert(fp != NULL);
+    fscanf(fp, "%d", &logic_cpu);
+    pclose(fp);
+#else
+    FILE *fp;
     char *s;
     char buf[MAX_CPUINFO_LEN];
     fp = fopen("/proc/cpuinfo", "rb");
@@ -36,7 +43,10 @@ int cpucount(void)
         if (s == strstr(buf, "processor"))
             logic_cpu += 1;
     }
+    fclose(fp);
+#endif
     logic_cpu = (logic_cpu > MAX_THREADS) ? MAX_THREADS : logic_cpu;
+    logic_cpu = (logic_cpu < 1) ? 1 : logic_cpu; // just in case
     return logic_cpu;
 }
 
