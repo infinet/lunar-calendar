@@ -13,8 +13,7 @@ __copyright__ = '2020, Chen Wei <weichen302@gmail.com>'
 __version__ = '0.0.3'
 
 from io import StringIO
-from datetime import datetime
-from datetime import timedelta
+from datetime import datetime, timedelta, UTC
 import getopt
 import gzip
 import os
@@ -27,7 +26,7 @@ from lunarcalbase import cn_lunarcal
 
 APPDIR = os.path.abspath(os.path.dirname(__file__))
 DB_FILE = os.path.join(APPDIR, 'db', 'lunarcal.sqlite')
-RE_CAL = re.compile('(\d{4})年(\d{1,2})月(\d{1,2})日')
+RE_CAL = re.compile(r'(\d{4})年(\d{1,2})月(\d{1,2})日')
 #PROXY = {'http': 'http://localhost:8001'}
 PROXY = None
 URL = 'https://www.hko.gov.hk/tc/gts/time/calendar/text/files/T%dc.txt'
@@ -96,6 +95,56 @@ def initdb():
     db.close()
 
 
+def is_leap_year(year):
+    """判断是否为闰年"""
+    return year % 4 == 0 and (year % 100 != 0 or year % 400 == 0)
+
+
+def check_db_integrity():
+    """检查数据库完整性，返回需要重新抓取的年份列表
+    
+    Returns:
+        list: 缺失或不完整的年份列表
+    """
+    if not os.path.exists(DB_FILE):
+        print('数据库文件不存在，需要创建并抓取所有数据')
+        return list(range(1901, 2101))
+    
+    conn = sqlite3.connect(DB_FILE)
+    db = conn.cursor()
+    
+    # 检查表是否存在
+    db.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='ical'")
+    if not db.fetchone():
+        print('数据库表不存在，需要创建并抓取所有数据')
+        return list(range(1901, 2101))
+    
+    missing_years = []
+    print('检查数据库完整性...')
+    
+    for year in range(1901, 2101):
+        expected_days = 366 if is_leap_year(year) else 365
+        
+        db.execute('SELECT COUNT(*) FROM ical WHERE date LIKE ?', ('%s-%%' % year,))
+        actual_days = db.fetchone()[0]
+        
+        if actual_days != expected_days:
+            missing_years.append(year)
+    
+    conn.close()
+    
+    if missing_years:
+        print('发现 %d 个年份需要抓取' % len(missing_years))
+        if len(missing_years) <= 20:
+            print('缺失年份: %s' % missing_years)
+        else:
+            print('缺失年份: %s ... (共 %d 年)' % (missing_years[:10], len(missing_years)))
+    else:
+        print('数据库完整，包含 1901-2100 年的所有数据')
+    
+    return missing_years
+
+
 def printjieqi():
     sql = 'select jieqi from ical where jieqi NOT NULL limit 28'
     res = query_db(sql)
@@ -156,9 +205,31 @@ def parse_hko(pageurl):
 
 
 def update_cal():
-    ''' fetch lunar calendar from HongKong Obs, parse it and save to db'''
-    for y in range(1901, 2101):
-        parse_hko(URL % y)
+    """从香港天文台抓取农历数据，支持断点续传
+    
+    只抓取缺失或不完整的年份数据，避免重复抓取
+    """
+    missing_years = check_db_integrity()
+    
+    if not missing_years:
+        print('数据库已完整，无需抓取')
+        return
+    
+    print('开始抓取 %d 年的数据...' % len(missing_years))
+    
+    for i, year in enumerate(missing_years):
+        try:
+            parse_hko(URL % year)
+            
+            # 每10年或最后一年显示进度
+            if (i + 1) % 10 == 0 or i == len(missing_years) - 1:
+                print('进度: %d/%d 年已完成 (%.1f%%)' % (i + 1, len(missing_years), (i + 1) * 100.0 / len(missing_years)))
+        
+        except Exception as e:
+            print('警告: 抓取 %d 年数据失败 - %s，将跳过继续' % (year, str(e)))
+            continue
+    
+    print('数据抓取完成')
 
 
 def gen_cal(start, end, fp):
@@ -200,7 +271,7 @@ def gen_cal(start, end, fp):
             ld.append(r['jieqi'])
         uid = '%s-lc@infinet.github.io' % r['date']
         summary = ' '.join(ld)
-        utcstamp = datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')
+        utcstamp = datetime.now(UTC).strftime('%Y%m%dT%H%M%SZ')
         line = ICAL_SEC % (utcstamp, uid, dt.strftime('%Y%m%d'),
                        (dt + oneday).strftime('%Y%m%d'), summary)
         lines.append(line)
@@ -248,7 +319,7 @@ def gen_cal_jieqi_only(start, end, fp):
             ld.append(r['jieqi'])
         uid = '%s-lc@infinet.github.io' % r['date']
         summary = ' '.join(ld)
-        utcstamp = datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')
+        utcstamp = datetime.now(UTC).strftime('%Y%m%dT%H%M%SZ')
         dt = datetime.strptime(r['date'], '%Y-%m-%d')
         line = ICAL_SEC % (utcstamp, uid, dt.strftime('%Y%m%d'),
                        (dt + oneday).strftime('%Y%m%d'), summary)
@@ -384,18 +455,34 @@ def main():
     jieqionly = False
     for o, v in opts:
         if o == '--start':
-            start = v
+            try:
+                datetime.strptime(v, '%Y-%m-%d')
+                start = v
+            except ValueError:
+                print('错误: --start 参数格式无效: "%s"' % v)
+                print('正确格式: yyyy-mm-dd (例如: 2020-01-31)')
+                sys.exit(1)
         elif o == '--end':
-            end = v
+            try:
+                datetime.strptime(v, '%Y-%m-%d')
+                end = v
+            except ValueError:
+                print('错误: --end 参数格式无效: "%s"' % v)
+                print('正确格式: yyyy-mm-dd (例如: 2020-12-31)')
+                sys.exit(1)
         elif o == '--jieqi':
             jieqionly = True
         elif 'h' in o:
             sys.exit(helpmsg)
 
+    # 检查数据库完整性，自动抓取缺失数据
     if not os.path.exists(DB_FILE):
         initdb()
+    
+    missing_years = check_db_integrity()
+    if missing_years:
         update_cal()
-        post_process()  # fix error in HK data
+        post_process()
         update_holiday()
     if len(sys.argv) == 1:
         fp = OUTPUT % ('prev_year', 'next_year')
